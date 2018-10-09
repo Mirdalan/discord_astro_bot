@@ -1,0 +1,9 @@
+aiohttp==3.4.4
+async-timeout==3.0.1
+disco-py==0.0.12
+google-api-python-client==1.7.4
+google-auth==1.5.1
+google-auth-httplib2==0.0.3
+requests==2.19.1
+SQLAlchemy==1.2.12
+tabulate==0.8.2

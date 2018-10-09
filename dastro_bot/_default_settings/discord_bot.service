@@ -1,0 +1,13 @@
+[Unit]
+Description=Star Citizen Assistant Discord BOT
+After=network.target
+
+[Service]
+Type=simple
+User=discord_bot
+WorkingDirectory=/home/discord_bot/discord_bot
+ExecStart=/usr/bin/python3.6 -m disco.cli --config discord_bot.json --run-bot
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
