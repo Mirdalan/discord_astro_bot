@@ -1,14 +1,18 @@
 from setuptools import setup
 
 
-with open('requirements.txt', 'r') as f:
+with open('requirements.txt') as f:
     requirements = f.read().splitlines()
+with open("README.md") as f:
+    long_description = f.read()
+
 
 setup(
     name='dastro_bot',
     version='1.0.0b1',
     description='Discord bot for Star Citizen players',
-    long_description='',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/Mirdalan/discord_astro_bot',
     author='Michal Chrzanowski',
     author_email='michrzan@gmail.com',
