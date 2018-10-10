@@ -3,7 +3,7 @@ jobs:
   build:
     branches:
       only:
-      - master
+      - prod
     docker:
     - image: circleci/python:3.6
 
