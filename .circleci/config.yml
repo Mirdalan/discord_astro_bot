@@ -33,12 +33,9 @@ jobs:
             python -m unittest -v tests
 
       - run:
-          name: show variables
+          name: publish on pypi
           command: |
-            cat <<- EOF > .pypirc
-                [$REPOSITORY]
-                repository: $URL
-                username: $USER
-                password: $PASSWORD
-            EOF
-            cat .pypirc
+            . venv/bin/activate
+            pip install -U -r requirements_dev.txt
+            python setup.py sdist bdist_wheel
+            twine upload dist/* -u $USER -p $PASSWORD
