@@ -33,9 +33,19 @@ jobs:
             python -m unittest -v tests
 
       - run:
-          name: publish on pypi
+          name: install build tools
           command: |
             . venv/bin/activate
             pip install -U -r requirements_dev.txt
+
+      - run:
+          name: publish on pypi
+          command: |
+            . venv/bin/activate
             python setup.py sdist bdist_wheel
+
+      - run:
+          name: publish on pypi
+          command: |
+            . venv/bin/activate
             twine upload dist/* -u $USER -p $PASSWORD
