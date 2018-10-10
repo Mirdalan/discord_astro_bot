@@ -46,6 +46,9 @@ jobs:
 
       - run:
           name: publish on pypi
+          branches:
+            only:
+            - master
           command: |
             . venv/bin/activate
             twine upload dist/* -u $USER -p $PASSWORD
