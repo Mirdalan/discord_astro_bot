@@ -15,7 +15,7 @@ class MockDiscordUser:
 class FleetManagerTests(unittest.TestCase):
     def setUp(self):
         self.db_name = 'test_db'
-        self.mgr = DatabaseManager(self.db_name)
+        self.mgr = DatabaseManager(self.db_name, log_file=None)
 
     def test_creates_and_reads_members(self):
         self.mgr.add_and_get_member(MockDiscordUser("jeden"))

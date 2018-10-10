@@ -9,8 +9,8 @@ from dastro_bot.rsi_parser import RoadMap
 class RoadMapTests(unittest.TestCase):
     def setUp(self):
         self.db_name = 'test_db'
-        self.mgr = DatabaseManager(self.db_name)
-        self.road_map = RoadMap(database_manager=self.mgr)
+        self.mgr = DatabaseManager(self.db_name, log_file=None)
+        self.road_map = RoadMap(database_manager=self.mgr, log_file=None)
 
     def test_release_details(self):
         result = self.road_map.get_release_details("3.2.0")
