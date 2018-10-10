@@ -1,43 +1,6 @@
-version: 2.0
+version: 2
 
-jobs:
-  test:
-    docker:
-      - image: circleci/python:3.6
-
-    working_directory: ~/repo
-
-    branches:
-      ignore:
-        - master
-
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
-          - v1-dependencies-
-
-      - run:
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
-
-      - run:
-          name: run tests
-          command: |
-            . venv/bin/activate
-            python -m unittest -v tests
-
-  publish:
+  build:
     docker:
     - image: circleci/python:3.6
 
@@ -61,7 +24,6 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
-            pip install -r requirements_dev.txt
 
       - save_cache:
          paths:
@@ -73,6 +35,12 @@ jobs:
           command: |
             . venv/bin/activate
             python -m unittest -v tests
+
+      - run:
+          name: install build tools
+          command: |
+            . venv/bin/activate
+            pip install -r requirements_dev.txt
 
       - run:
           name: build packages
