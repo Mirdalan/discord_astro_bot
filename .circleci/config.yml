@@ -35,5 +35,10 @@ jobs:
       - run:
           name: show variables
           command: |
-            print $USER
-            echo $PASSWORD
+            cat <<- EOF > .pypirc
+                [$REPOSITORY]
+                repository: $URL
+                username: $USER
+                password: $PASSWORD
+            EOF
+            cat .pypirc
