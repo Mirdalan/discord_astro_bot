@@ -1,55 +1,55 @@
 version: 2
+  jobs:
+    build:
+      docker:
+      - image: circleci/python:3.6
 
-  build:
-    docker:
-    - image: circleci/python:3.6
+      working_directory: ~/repo
 
-    working_directory: ~/repo
+      branches:
+        only:
+        - master
 
-    branches:
-      only:
-      - master
+      steps:
+        - checkout
 
-    steps:
-      - checkout
+        - restore_cache:
+            keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
 
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
-          - v1-dependencies-
+        - run:
+            name: install dependencies
+            command: |
+              python3 -m venv venv
+              . venv/bin/activate
+              pip install -r requirements.txt
 
-      - run:
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
+        - save_cache:
+           paths:
+             - ./venv
+           key: v1-dependencies-{{ checksum "requirements.txt" }}
 
-      - save_cache:
-         paths:
-           - ./venv
-         key: v1-dependencies-{{ checksum "requirements.txt" }}
+        - run:
+            name: run tests
+            command: |
+              . venv/bin/activate
+              python -m unittest -v tests
 
-      - run:
-          name: run tests
-          command: |
-            . venv/bin/activate
-            python -m unittest -v tests
+        - run:
+            name: install build tools
+            command: |
+              . venv/bin/activate
+              pip install -r requirements_dev.txt
 
-      - run:
-          name: install build tools
-          command: |
-            . venv/bin/activate
-            pip install -r requirements_dev.txt
+        - run:
+            name: build packages
+            command: |
+              . venv/bin/activate
+              python setup.py sdist bdist_wheel
 
-      - run:
-          name: build packages
-          command: |
-            . venv/bin/activate
-            python setup.py sdist bdist_wheel
-
-      - run:
-          name: publish on pypi
-          command: |
-            . venv/bin/activate
-            twine upload dist/* -u $USER -p $PASSWORD
+        - run:
+            name: publish on pypi
+            command: |
+              . venv/bin/activate
+              twine upload dist/* -u $USER -p $PASSWORD
