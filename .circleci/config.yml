@@ -32,26 +32,15 @@ jobs:
             . venv/bin/activate
             python -m unittest -v tests
 
-      - run:
-          name: install build tools
-          command: |
-            . venv/bin/activate
-            pip install -U -r requirements_dev.txt
-
-      - run:
-          name: build packages
-          command: |
-            . venv/bin/activate
-            python setup.py sdist bdist_wheel
-
   publish:
-    branches:
-      only:
-      - master
     docker:
     - image: circleci/python:3.6
 
     working_directory: ~/repo
+
+    branches:
+      only:
+      - master
 
     steps:
       - checkout
