@@ -1,9 +1,9 @@
 version: 2
 jobs:
   build:
-    branches:
-      only:
-      - master
+#    branches:
+#      only:
+#      - master
     docker:
     - image: circleci/python:3.6
 
@@ -22,7 +22,6 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt
             pip install -r requirements_dev.txt
 
       - save_cache:
@@ -35,8 +34,9 @@ jobs:
           command: |
             . venv/bin/activate
             python setup.py sdist bdist_wheel
-      - run:
-          name: publish on pypi
-          command: |
-            . venv/bin/activate
-            twine upload dist/* -u $USER -p $PASSWORD
+
+#      - run:
+#          name: publish on pypi
+#          command: |
+#            . venv/bin/activate
+#            twine upload dist/* -u $USER -p $PASSWORD
