@@ -22,7 +22,6 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt
             pip install -r requirements_dev.txt
 
       - save_cache:
@@ -35,6 +34,7 @@ jobs:
           command: |
             . venv/bin/activate
             python setup.py sdist bdist_wheel
+
       - run:
           name: publish on pypi
           command: |
