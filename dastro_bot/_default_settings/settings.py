@@ -5,8 +5,8 @@ LOG_FILE = "dastro_bot.log"
 LOGGER_NAME = "Star Citizen Discord Astro-Bot logger"
 
 # language
-messages = languages.messages_pl
-additional_commands = languages.commands_pl
+messages = languages.messages_en
+additional_commands = languages.commands_en
 
 # server
 CHANNELS = {

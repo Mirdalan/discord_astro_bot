@@ -1,2 +1,0 @@
-from .star_citizen_assistant import StarCitizenAssistant
-from ._deployment_helpers import start_project

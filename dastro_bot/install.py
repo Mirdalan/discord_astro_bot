@@ -1,6 +1,8 @@
 import os
 from shutil import copyfile
 
+import sys
+
 
 DEFAULT_FILES_DIR = "_default_settings"
 
@@ -17,3 +19,10 @@ def start_project(name="discord_bot"):
     destination_dir = os.path.join(os.getcwd(), name)
     os.mkdir(destination_dir)
     deploy_default_files(destination_dir)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        start_project(sys.argv[1])
+    else:
+        print("Usage: python -m dastro_bot.install <directory_name>")
