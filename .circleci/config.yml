@@ -48,25 +48,46 @@ jobs:
     branches:
       only:
       - master
+    docker:
+    - image: circleci/python:3.6
 
     working_directory: ~/repo
 
     steps:
+      - checkout
 
-    - run:
-        name: install build tools
-        command: |
-          . venv/bin/activate
-          pip install -U -r requirements_dev.txt
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          - v1-dependencies-
 
-    - run:
-        name: build packages
-        command: |
-          . venv/bin/activate
-          python setup.py sdist bdist_wheel
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+            pip install -r requirements_dev.txt
 
-    - run:
-        name: publish on pypi
-        command: |
-          . venv/bin/activate
-          twine upload dist/* -u $USER -p $PASSWORD
+      - save_cache:
+         paths:
+           - ./venv
+         key: v1-dependencies-{{ checksum "requirements.txt" }}
+
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            python -m unittest -v tests
+
+      - run:
+          name: build packages
+          command: |
+            . venv/bin/activate
+            python setup.py sdist bdist_wheel
+
+      - run:
+          name: publish on pypi
+          command: |
+            . venv/bin/activate
+            twine upload dist/* -u $USER -p $PASSWORD
