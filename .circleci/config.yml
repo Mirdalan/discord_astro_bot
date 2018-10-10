@@ -26,14 +26,14 @@ jobs:
             - ./venv
           key: v1-dependencies-{{ checksum "requirements.txt" }}
 
-          - run:
-              name: run tests
-              command: |
-                . venv/bin/activate
-                python -m unittest -v tests
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            python -m unittest -v tests
 
-          - run:
-              name: show variables
-              command: |
-                print $USER
-                echo $PASSWORD
+      - run:
+          name: show variables
+          command: |
+            print $USER
+            echo $PASSWORD
