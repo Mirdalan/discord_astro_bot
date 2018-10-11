@@ -24,6 +24,12 @@ jobs:
             . venv/bin/activate
             pip install -r requirements_dev.txt
 
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            python -m unittest -v tests
+
       - save_cache:
          paths:
            - ./venv
@@ -40,3 +46,38 @@ jobs:
           command: |
             . venv/bin/activate
             twine upload dist/* -u $USER -p $PASSWORD
+
+  test:
+    branches:
+      only:
+      - master
+    docker:
+    - image: circleci/python:3.6
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - test-dependencies-{{ checksum "requirements.txt" }}
+          - test-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            python -m unittest -v tests
+
+      - save_cache:
+         paths:
+           - ./venv
+         key: test-dependencies-{{ checksum "requirements.txt" }}
