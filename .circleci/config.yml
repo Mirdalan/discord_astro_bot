@@ -1,56 +1,7 @@
 version: 2
 jobs:
-  build:
-    branches:
-      only:
-      - prod
-    docker:
-    - image: circleci/python:3.6
-
-    working_directory: ~/repo
-
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "requirements_dev.txt" }}
-          - v1-dependencies-
-
-      - run:
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements_dev.txt
-
-      - run:
-          name: run tests
-          command: |
-            . venv/bin/activate
-            python -m unittest -v tests
-
-      - save_cache:
-         paths:
-           - ./venv
-         key: v1-dependencies-{{ checksum "requirements_dev.txt" }}
-
-      - run:
-          name: build packages
-          command: |
-            . venv/bin/activate
-            python setup.py sdist bdist_wheel
-
-      - run:
-          name: publish on pypi
-          command: |
-            . venv/bin/activate
-            twine upload dist/* -u $USER -p $PASSWORD
 
   test:
-    branches:
-      only:
-      - master
     docker:
     - image: circleci/python:3.6
 
@@ -82,17 +33,52 @@ jobs:
            - ./venv
          key: test-dependencies-{{ checksum "requirements.txt" }}
 
+  publish:
+    docker:
+    - image: circleci/python:3.6
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements_dev.txt" }}
+          - v1-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements_dev.txt
+
+      - save_cache:
+         paths:
+           - ./venv
+         key: v1-dependencies-{{ checksum "requirements_dev.txt" }}
+
+      - run:
+          name: build packages
+          command: |
+            . venv/bin/activate
+            python setup.py sdist bdist_wheel
+
+      - run:
+          name: publish on pypi
+          command: |
+            . venv/bin/activate
+            twine upload dist/* -u $USER -p $PASSWORD
+
 workflows:
   version: 2
-    build_and_publish:
-      jobs:
-      - build
-        filters:
-          branches:
-            only: prod
-    run_tests:
-      jobs:
+  build_test_publish:
+    jobs:
       - test
-        filters:
-          branches:
-            ignore: prod
+      - publish:
+          requires:
+            - test
+          filters:
+            branches:
+              only: prod
