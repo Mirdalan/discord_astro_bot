@@ -105,16 +105,21 @@ class RsiDataParser:
                 result.append(ship)
         return result
 
+    def verify_ship(self, ship):
+        db_ship = self.get_ship(ship.get('name'))
+        if db_ship:
+            if len(db_ship["manufacturer"]) > 20:
+                ship["manufacturer"] = db_ship["manufacturer_code"]
+            else:
+                ship["manufacturer"] = db_ship["manufacturer"]
+            return ship
+
     def verify_ships(self, ships_data):
         verified_ships = []
         invalid_ships = []
         for ship in ships_data:
-            db_ship = self.get_ship(ship.get('name'))
-            if db_ship:
-                if len(db_ship["manufacturer"]) > 20:
-                    ship["manufacturer"] = db_ship["manufacturer_code"]
-                else:
-                    ship["manufacturer"] = db_ship["manufacturer"]
+            ship = self.verify_ship(ship)
+            if ship:
                 verified_ships.append(ship)
             else:
                 invalid_ships.append({'name': ship['name'], 'manufacturer': ship['manufacturer']})

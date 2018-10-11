@@ -31,4 +31,5 @@ The second command generates default configuration files to run your own BOT:
 * languages.py - named tuples with translation 
 * settings.py - custom settings for your server
 
+#### Google Spreadsheet
 

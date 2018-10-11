@@ -67,7 +67,7 @@ class StarCitizenAssistant(Plugin):
         return '<#' + str(channel.id) + '>'
 
     def get_ship_data_from_name(self, event, ship_name):
-        ship_data = self.rsi_data.get_ship(ship_name)
+        ship_data = self.rsi_data.verify_ship(self.rsi_data.get_ship(ship_name))
         if ship_data is None:
             found_ships = self.rsi_data.get_ships_by_query(ship_name)
             if len(found_ships) == 0:
@@ -172,8 +172,6 @@ class StarCitizenAssistant(Plugin):
         ship_data = self.get_ship_data_from_name(event, ship_name)
         if ship_data:
             ship_data['lti'] = ship[-3:].lower() == "lti"
-            if len(ship_data["manufacturer"]) > 20:
-                ship_data["manufacturer"] = ship_data["manufacturer_code"]
             return ship_data
 
     def show_updated_member_ships(self, event):
