@@ -68,8 +68,6 @@ class StarCitizenAssistant(Plugin):
 
     def get_ship_data_from_name(self, ship_name):
         ship_data = self.rsi_data.get_ship(ship_name)
-        if ship_data:
-            ship_data = self.rsi_data.verify_ship(ship_data)
         if ship_data is None:
             found_ships = self.rsi_data.get_ships_by_query(ship_name)
             if len(found_ships) == 1:
