@@ -224,8 +224,9 @@ class StarCitizenAssistant(Plugin):
     @Plugin.command(additional_commands.ship, '<query:str...>')
     def check_ship_info(self, event, query):
         found_ship = self.get_ship_data_from_name(query)
-        if isinstance(found_ship, list) and (1 < len(found_ship) < 5):
-            event.msg.reply(self.compare_ships_data(found_ship))
+        if isinstance(found_ship, list) and (1 < len(found_ship) < 7):
+            for message in self.split_compare_if_too_long(found_ship):
+                event.msg.reply(message)
         elif isinstance(found_ship, dict):
             event.msg.reply(self.format_ship_data(found_ship))
         else:
@@ -239,6 +240,15 @@ class StarCitizenAssistant(Plugin):
                     row.append(ship.get(row[0], "unknown"))
         return "\n```%s```\n" % tabulate(table)
 
+    def split_compare_if_too_long(self, ships):
+        message = self.compare_ships_data(ships)
+        if len(message) < 2000:
+            return [message]
+        else:
+            half_length = int(len(ships) * 0.5)
+            return self.split_compare_if_too_long(ships[:half_length]) + \
+                   self.split_compare_if_too_long(ships[half_length:])
+
     @Plugin.command('compare', '<query:str...>',
                     docstring="Compare ships details, e.g. 'compare Cutlass Black,Freelancer MAX'")
     @Plugin.command(additional_commands.compare, '<query:str...>')
@@ -251,8 +261,9 @@ class StarCitizenAssistant(Plugin):
                 found_ships += ship_data
             elif isinstance(ship_data, dict):
                 found_ships.append(ship_data)
-        if found_ships and len(found_ships) < 5:
-            event.msg.reply(self.compare_ships_data(found_ships))
+        if isinstance(found_ships, list) and (1 < len(found_ships) < 7):
+            for message in self.split_compare_if_too_long(found_ships):
+                event.msg.reply(message)
         else:
             event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
 

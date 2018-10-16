@@ -105,6 +105,7 @@ class RsiDataParser:
             if query in ship["name"].lower() \
                     or query in ship["manufacturer"].lower() \
                     or query in ship["manufacturer_code"].lower():
+                ship = self.shorten_manufacturer_name(ship)
                 result.append(ship)
         return result
 
