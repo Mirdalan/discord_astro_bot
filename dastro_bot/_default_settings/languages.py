@@ -31,7 +31,7 @@ Commands = namedtuple('Commands', [
 ])
 
 messages_pl = Messages(
-    ship_not_exists="Taki okręt nie istnieje!",
+    ship_not_exists="%s, taki okręt nie istnieje!",
     multiple_ships_found="Niestety, nie jestem pewien czego dokładnie szukasz druhu. Czy chodziło Ci może o ...\n%s",
     member_not_found="Przykro mi, nie znalazłem takiej osoby.",
     member_ships_modified="Drogi %s, zanotowałem. Oto Twoja aktualna flota:",
@@ -59,7 +59,7 @@ commands_pl = Commands(
 )
 
 messages_en = Messages(
-    ship_not_exists="There's no such ship!",
+    ship_not_exists="%s, there's no such ship!",
     multiple_ships_found="Not sure what you mean. Maybe try one of this:\n%s",
     member_not_found="I'm sorry, there's no such member.",
     member_ships_modified="%s Here's your updated fleet:",

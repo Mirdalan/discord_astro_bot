@@ -66,17 +66,14 @@ class StarCitizenAssistant(Plugin):
     def mention_channel(channel):
         return '<#' + str(channel.id) + '>'
 
-    def get_ship_data_from_name(self, event, ship_name):
+    def get_ship_data_from_name(self, ship_name):
         ship_data = self.rsi_data.verify_ship(self.rsi_data.get_ship(ship_name))
         if ship_data is None:
             found_ships = self.rsi_data.get_ships_by_query(ship_name)
-            if len(found_ships) == 0:
-                event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
-            elif len(found_ships) > 1:
-                ships_list = [" **%s**   *%s*" % (ship['name'], ship['focus']) for ship in found_ships]
-                event.msg.reply(self.messages.multiple_ships_found % "\n".join(ships_list))
-            else:
+            if len(found_ships) == 1:
                 ship_data = found_ships[0]
+            else:
+                ship_data = found_ships
         return ship_data
 
     def show_invalid_ships(self, event, invalid_ships):
@@ -167,10 +164,10 @@ class StarCitizenAssistant(Plugin):
         else:
             event.channel.send_message(self.messages.member_not_found)
 
-    def get_ship_for_member(self, event, ship):
+    def get_ship_for_member(self, ship):
         ship_name = ship.replace("lti", "").strip()
-        ship_data = self.get_ship_data_from_name(event, ship_name)
-        if ship_data:
+        ship_data = self.get_ship_data_from_name(ship_name)
+        if ship_data and isinstance(ship_data, dict):
             ship_data['lti'] = ship[-3:].lower() == "lti"
             return ship_data
 
@@ -182,7 +179,7 @@ class StarCitizenAssistant(Plugin):
     @Plugin.command('add_ship', '<ship:str...>', docstring="Manually add ship to fleet, e.g. 'add_ship Herald LTI'")
     @Plugin.command(additional_commands.add_ship, '<ship:str...>')
     def add_ship(self, event, ship):
-        ship_data = self.get_ship_for_member(event, ship)
+        ship_data = self.get_ship_for_member(ship)
         if ship_data:
             self.database_manager.add_one_ship(ship_data, event.author)
             self.show_updated_member_ships(event)
@@ -191,7 +188,7 @@ class StarCitizenAssistant(Plugin):
                     docstring="Manually remove ship from member fleet, e.g. 'remove_ship Herald LTI'")
     @Plugin.command(additional_commands.remove_ship, '<ship:str...>')
     def remove_ship(self, event, ship):
-        ship_data = self.get_ship_for_member(event, ship)
+        ship_data = self.get_ship_for_member(ship)
         if ship_data:
             if self.database_manager.remove_one_ship(ship_data, event.author):
                 self.show_updated_member_ships(event)
@@ -226,9 +223,13 @@ class StarCitizenAssistant(Plugin):
     @Plugin.command('ship', '<query:str...>', docstring="Ship details, e.g. 'ship Cutlass Black'")
     @Plugin.command(additional_commands.ship, '<query:str...>')
     def check_ship_info(self, event, query):
-        found_ship = self.get_ship_data_from_name(event, query)
-        if found_ship:
+        found_ship = self.get_ship_data_from_name(query)
+        if isinstance(found_ship, list) and (1 < len(found_ship) < 5):
+            event.msg.reply(self.compare_ships_data(found_ship))
+        elif isinstance(found_ship, dict):
             event.msg.reply(self.format_ship_data(found_ship))
+        else:
+            event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
 
     def compare_ships_data(self, ships):
         table = [[key] for key in self.ship_data_headers]
@@ -243,9 +244,17 @@ class StarCitizenAssistant(Plugin):
     @Plugin.command(additional_commands.compare, '<query:str...>')
     def compare_ships(self, event, query):
         names = query.split(",")
-        found_ships = [self.get_ship_data_from_name(event, name.strip()) for name in names]
-        if found_ships:
+        found_ships = []
+        for name in names:
+            ship_data = self.get_ship_data_from_name(name.strip())
+            if isinstance(ship_data, list):
+                found_ships += ship_data
+            elif isinstance(ship_data, dict):
+                found_ships.append(ship_data)
+        if found_ships and len(found_ships) < 5:
             event.msg.reply(self.compare_ships_data(found_ships))
+        else:
+            event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
 
     def report_ship_price(self):
         for ship_name, price_limit in self.report_ship_price_list:
