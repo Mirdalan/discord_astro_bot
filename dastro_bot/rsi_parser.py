@@ -93,7 +93,10 @@ class RsiDataParser:
             sleep(self.auto_update_period)
 
     def get_ship(self, ship_name):
-        return self.ships.get(ship_name.lower())
+        ship = self.ships.get(ship_name.lower())
+        if ship:
+            self.shorten_manufacturer_name(ship)
+            return ship
 
     def get_ships_by_query(self, query):
         query = query.lower()
@@ -105,13 +108,19 @@ class RsiDataParser:
                 result.append(ship)
         return result
 
+    @staticmethod
+    def shorten_manufacturer_name(ship, db_ship=None):
+        if db_ship is None:
+            db_ship = ship
+        if len(db_ship["manufacturer"]) > 20:
+            ship["manufacturer"] = db_ship["manufacturer_code"]
+        else:
+            ship["manufacturer"] = db_ship["manufacturer"]
+
     def verify_ship(self, ship):
         db_ship = self.get_ship(ship.get('name'))
         if db_ship:
-            if len(db_ship["manufacturer"]) > 20:
-                ship["manufacturer"] = db_ship["manufacturer_code"]
-            else:
-                ship["manufacturer"] = db_ship["manufacturer"]
+            self.shorten_manufacturer_name(ship, db_ship)
             return ship
 
     def verify_ships(self, ships_data):

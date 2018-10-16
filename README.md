@@ -18,6 +18,18 @@ This project contains python bot project for Discord, useful for Star Citizen pl
  
  If your bot is running use the `help` command to see all available commands. 
 
+### Dependencies
+* Python 3.5+
+* aiohttp 3.4.4
+* async-timeout 3.0.1
+* disco-py 0.0.12
+* google-api-python-client 1.7.4
+* google-auth 1.5.1
+* google-auth-httplib2 0.0.3
+* oauth2client 4.1.3
+* SQLAlchemy 1.2.12
+* tabulate 0.8.2
+
 ### Installation
 
 ```bash
@@ -31,5 +43,39 @@ The second command generates default configuration files to run your own BOT:
 * languages.py - named tuples with translation 
 * settings.py - custom settings for your server
 
-#### Google Spreadsheet
+### Basic Configuration
+Here's what you absolutely need to configure to run the bot:
+* discord_bot.json 
+  * set the `token` value to your generated discord token
+* settings.py 
+  * set the CHANNELS dict values to channels IDs from your server
+  * actually in basic config only the `main` channel is required
+  * you can set all three channels with the same value
+* discord_bot.service
+  * if you want to setup a systemd service
 
+#### Google Spreadsheet
+Google spreadsheeet API is used to read trade data created by community.
+In current version it supports this spreadsheet:
+* https://www.reddit.com/r/starcitizen/comments/8vrrxv/320_full_trading_sheet_by_kamille92/
+
+Which is already outdated. However the source of trade data will need to be updated soon[TM] 
+anyway, after SC 3.3 release.  
+
+In order to properly use the google spreadsheet data source please follow the following tutorial:
+* https://developers.google.com/sheets/api/quickstart/python
+
+Then please rename two json files to:
+```text
+google_credentials.json
+google_token.json
+```
+
+#### Database
+Astro Bot uses SQL Alchemy to handle database and SQLite database is used by default. If you want to use 
+different database then please adjust `settings.py` file accordingly. 
+There are two parameters there which are used to configure database:
+```text
+DATABASE_NAME
+DATABASE_DIALECT
+```
