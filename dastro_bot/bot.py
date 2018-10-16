@@ -261,7 +261,7 @@ class StarCitizenAssistant(Plugin):
                 found_ships += ship_data
             elif isinstance(ship_data, dict):
                 found_ships.append(ship_data)
-        if isinstance(found_ships, list) and (1 < len(found_ships) < 7):
+        if isinstance(found_ships, list) and len(found_ships) < 7:
             for message in self.split_compare_if_too_long(found_ships):
                 event.msg.reply(message)
         else:
