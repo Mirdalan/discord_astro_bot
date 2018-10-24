@@ -59,6 +59,8 @@ class DatabaseManager:
 
     def add_one_ship(self, ship_data, owner):
         member = self.get_member_by_discord_id(owner.id)
+        if member is None:
+            member = self.add_and_get_member(owner)
         ships = self.get_ships_dicts_by_member_id(member.id)
         if ships:
             ships.append(ship_data)

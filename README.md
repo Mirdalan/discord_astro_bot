@@ -8,7 +8,7 @@ This project contains python bot project for Discord, useful for Star Citizen pl
  1. Organization fleet information. Each member can add/remove ships that he owns. 
  Database is stored for everyone. There are commands to display whole organization fleet or 
  ships owned by specific member.
- 1. RSI store data on ships. There are commands to view ship details, comparison of multiple ships or check 
+ 1. Ship matrix data. There are commands to view ship details, comparison of multiple ships or check 
  prices of multiple ships that match expression (e.g. all DRAKE ships)
  1. Displaying of Road Map data with filters on specific expression (e.g. when searching for a ship release). 
  Displaying info for a specific release or Road Map category.
