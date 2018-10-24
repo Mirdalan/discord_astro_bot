@@ -85,6 +85,14 @@ class StarCitizenAssistant(BaseBot):
             else:
                 event.channel.send_message(self.messages.member_ship_not_found % self.mention_user(event.author))
 
+    @Plugin.command('clear my ships', docstring="Manually clear member fleet.")
+    @Plugin.command(additional_commands.clear_member_ships, '<ship:str...>')
+    def clear_member_ships(self, event):
+        self.clear_member_fleet(event.author)
+        ships = self.database_manager.get_ships_by_member_name(event.author.username)
+        if ships:
+            event.channel.send_message(self.messages.something_went_wrong)
+
     @Plugin.command('prices', '<query:str...>', docstring="Ships prices in store credits, e.g. 'prices Cutlass'")
     @Plugin.command(additional_commands.prices, '<query:str...>')
     def check_ship_price(self, event, query):

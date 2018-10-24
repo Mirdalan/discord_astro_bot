@@ -13,6 +13,7 @@ Messages = namedtuple('Messages', [
     'ship_price_report',
     'new_version',
     'road_map_not_found',
+    'something_went_wrong'
 ])
 
 Commands = namedtuple('Commands', [
@@ -21,6 +22,7 @@ Commands = namedtuple('Commands', [
     'member_ships',
     'add_ship',
     'remove_ship',
+    'clear_member_ships',
     'prices',
     'ship',
     'compare',
@@ -42,6 +44,7 @@ messages_pl = Messages(
     ship_price_report="Czołem!\n *%s* obecnie kosztuje *%s*",
     new_version="Czołem! Przynoszę Wam wieści:\n%s",
     road_map_not_found="Przykro mi, nic takiego nie znalazłem. Posiadam jednakże wiedzę o poniższych:\n```%s```",
+    something_went_wrong="Coś poszło nie tak..."
 )
 
 commands_pl = Commands(
@@ -50,6 +53,7 @@ commands_pl = Commands(
     member_ships="flota_członka",
     add_ship="dodaj",
     remove_ship="usuń",
+    clear_member_ships="usuń moje statki",
     prices="ceny",
     ship="statek",
     compare="porównaj",
@@ -70,6 +74,7 @@ messages_en = Messages(
     ship_price_report="The price of *%s* is updated to *%s*",
     new_version="Howdy! I found some news:\n%s",
     road_map_not_found="Sorry, didn't find anything like that. You may try something like:\n```%s```",
+    something_went_wrong="Something went wrong..."
 )
 
 commands_en = Commands(
@@ -78,6 +83,7 @@ commands_en = Commands(
     member_ships="member_ships",
     add_ship="add_ship",
     remove_ship="remove_ship",
+    clear_member_ships="clear my ships",
     prices="prices",
     ship="ship",
     compare="compare",

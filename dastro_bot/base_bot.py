@@ -95,6 +95,9 @@ class BaseBot(Plugin):
             except Exception as unexpected_exception:
                 self.logger.error(str(unexpected_exception))
 
+    def clear_member_fleet(self, event):
+        self.database_manager.update_member_ships([], event.author)
+
     def send_table_or_split_if_too_big(self, event, ships):
         table = tabulate(ships, headers='keys', tablefmt="presto")
         half_length = int(len(ships) / 2)
