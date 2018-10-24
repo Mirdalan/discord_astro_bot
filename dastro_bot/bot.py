@@ -88,7 +88,7 @@ class StarCitizenAssistant(BaseBot):
     @Plugin.command('clear my ships', docstring="Manually clear member fleet.")
     @Plugin.command(additional_commands.clear_member_ships)
     def clear_member_ships(self, event):
-        self.clear_member_fleet(event.author)
+        self.clear_member_fleet(event)
         ships = self.database_manager.get_ships_by_member_name(event.author.username)
         if ships:
             event.channel.send_message(self.messages.something_went_wrong)
