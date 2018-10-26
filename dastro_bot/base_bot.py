@@ -1,8 +1,9 @@
 import threading
+import time
 
 from disco.bot import Plugin
 from tabulate import tabulate
-import time
+import pafy
 
 from .attachments_downloader import DiscordAttachmentHandler
 from .database_manager import DatabaseManager
@@ -177,10 +178,16 @@ class BaseBot(Plugin):
     def get_releases_message(current_releases):
         return "PU Live: %s\nPTU: %s\n" % (current_releases.get('live'), current_releases.get('ptu'))
 
+    def monitor_youtube_channel(self):
+        latest_video_url = pafy.get_channel("RobertsSpaceInd").uploads[0].watchv_url
+        if self.database_manager.rsi_video_is_new(latest_video_url):
+            self.channel_main.send_message(latest_video_url)
+
     def monitoring_procedure(self):
         while True:
             self.monitor_current_releases()
             self.monitor_forum_threads()
+            self.monitor_youtube_channel()
             self.report_ship_price()
             time.sleep(300)
 

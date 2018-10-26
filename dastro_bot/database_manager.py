@@ -5,7 +5,7 @@ import sqlalchemy.exc
 from sqlalchemy.orm import sessionmaker, exc
 
 import settings
-from .database_models import Base, Member, Ship, Version, RsiData, RoadMap, TradeData, FoundForumThreads
+from . import database_models
 from .my_logger import MyLogger
 
 
@@ -13,13 +13,14 @@ class DatabaseManager:
     def __init__(self, database_name=settings.DATABASE_NAME, log_file='database_mgr.log'):
         self.logger = MyLogger(log_file_name=log_file, logger_name="Database mgr logger", prefix="[DB]")
         database_engine = create_engine(settings.DATABASE_DIALECT % database_name, echo=False)
-        Base.metadata.create_all(database_engine)
+        database_models.Base.metadata.create_all(database_engine)
 
         session = sessionmaker(bind=database_engine)
         self.sql_alchemy_session = session()
 
     def add_and_get_member(self, user):
-        query = self.sql_alchemy_session.query(Member).filter(Member.discord_id == user.id)
+        query = self.sql_alchemy_session.query(database_models.Member)
+        query = query.filter(database_models.Member.discord_id == user.id)
         try:
             self.logger.debug("Member %s already exists. Deleting..." % user.username)
             member = query.one()
@@ -29,18 +30,18 @@ class DatabaseManager:
         except exc.NoResultFound:
             self.logger.debug("Member %s does not exist." % user.username)
         self.logger.debug("Creating member %s" % user.username)
-        member = Member(discord_id=user.id, name=user.username)
+        member = database_models.Member(discord_id=user.id, name=user.username)
         self.sql_alchemy_session.add(member)
         self.sql_alchemy_session.commit()
         self.logger.debug("New member id is '%s'." % str(member.id))
         return member
 
     def get_all_members(self):
-        return self.sql_alchemy_session.query(Member).all()
+        return self.sql_alchemy_session.query(database_models.Member).all()
 
     @staticmethod
     def create_ship(ship_data, owner):
-        return Ship(
+        return database_models.Ship(
             manufacturer=ship_data['manufacturer'],
             name=ship_data['name'],
             lti=ship_data.get('lti', False),
@@ -84,11 +85,12 @@ class DatabaseManager:
         return ship_removed
 
     def get_all_ships(self):
-        return self.sql_alchemy_session.query(Ship).all()
+        return self.sql_alchemy_session.query(database_models.Ship).all()
 
     def get_member_by_name(self, member_name):
         member_name = member_name.lower()
-        members_query = self.sql_alchemy_session.query(Member).filter(Member.name.like("%" + member_name + "%"))
+        members_query = self.sql_alchemy_session.query(database_models.Member)
+        members_query = members_query.filter(database_models.Member.name.like("%" + member_name + "%"))
         try:
             return members_query.one()
         except exc.NoResultFound:
@@ -97,7 +99,8 @@ class DatabaseManager:
             self.logger.debug("Too many members match name %s." % member_name)
 
     def get_member_by_discord_id(self, member_id):
-        members_query = self.sql_alchemy_session.query(Member).filter(Member.discord_id == member_id)
+        members_query = self.sql_alchemy_session.query(database_models.Member)
+        members_query = members_query.filter(database_models.Member.discord_id == member_id)
         try:
             return members_query.one()
         except exc.NoResultFound:
@@ -106,7 +109,9 @@ class DatabaseManager:
             self.logger.debug("Too many members match name %s." % member_id)
 
     def get_ships_by_member_id(self, member_id):
-        return self.sql_alchemy_session.query(Ship).filter(Ship.owner_id == member_id).all()
+        query = self.sql_alchemy_session.query(database_models.Ship)
+        query = query.filter(database_models.Ship.owner_id == member_id).all()
+        return query
 
     def get_ships_by_member_name(self, member_name):
         member = self.get_member_by_name(member_name)
@@ -130,7 +135,7 @@ class DatabaseManager:
         ships_names = set([ship.name for ship in self.get_all_ships()])
         result = []
         for name in ships_names:
-            ship_query = self.sql_alchemy_session.query(Ship).filter(Ship.name == name)
+            ship_query = self.sql_alchemy_session.query(database_models.Ship).filter(database_models.Ship.name == name)
             count = ship_query.count()
             ship_instances = ship_query.all()
             owners = set([ship.owner.name for ship in ship_instances])
@@ -147,7 +152,7 @@ class DatabaseManager:
         self.logger.debug("Updating PU and PTU version.")
         version_has_changed = False
         for key, new_value in input_data.items():
-            query = self.sql_alchemy_session.query(Version)
+            query = self.sql_alchemy_session.query(database_models.Version)
             query = query.filter_by(name=key)
             try:
                 old_data = query.one()
@@ -157,26 +162,26 @@ class DatabaseManager:
                     self.sql_alchemy_session.commit()
                     version_has_changed = True
             except exc.NoResultFound:
-                self.sql_alchemy_session.add(Version(name=key, value=new_value))
+                self.sql_alchemy_session.add(database_models.Version(name=key, value=new_value))
                 self.sql_alchemy_session.commit()
         return version_has_changed
 
     def save_rsi_data(self, ships_data):
         self.logger.debug("Updating RSI data.")
         ships_json = json.dumps(ships_data)
-        query = self.sql_alchemy_session.query(RsiData)
+        query = self.sql_alchemy_session.query(database_models.RsiData)
         try:
             old_data = query.one()
             old_data.ships = ships_json
         except exc.NoResultFound:
             self.logger.debug("No RSI data in database. Creating object.")
-            self.sql_alchemy_session.add(RsiData(ships=ships_json))
+            self.sql_alchemy_session.add(database_models.RsiData(ships=ships_json))
         except exc.MultipleResultsFound:
             self.logger.error("Multiple RSI objects in database!")
         self.sql_alchemy_session.commit()
 
     def get_rsi_data(self):
-        query = self.sql_alchemy_session.query(RsiData)
+        query = self.sql_alchemy_session.query(database_models.RsiData)
         try:
             old_data = query.one()
             return json.loads(old_data.ships)
@@ -197,7 +202,7 @@ class DatabaseManager:
         self.logger.debug("Updating RSI data.")
         releases, categories, current_versions = self.get_json_strings(*road_map_data)
 
-        query = self.sql_alchemy_session.query(RoadMap)
+        query = self.sql_alchemy_session.query(database_models.RoadMap)
         try:
             old_data = query.one()
             old_data.releases = releases
@@ -205,7 +210,7 @@ class DatabaseManager:
             old_data.current_versions = current_versions
         except exc.NoResultFound:
             self.logger.debug("No Road Map in database. Creating object.")
-            self.sql_alchemy_session.add(RoadMap(
+            self.sql_alchemy_session.add(database_models.RoadMap(
                 releases=releases,
                 categories=categories,
                 current_versions=current_versions
@@ -215,7 +220,7 @@ class DatabaseManager:
         self.sql_alchemy_session.commit()
 
     def get_road_map(self):
-        query = self.sql_alchemy_session.query(RoadMap)
+        query = self.sql_alchemy_session.query(database_models.RoadMap)
         try:
             old_data = query.one()
             return self.get_objects_from_json_strings(
@@ -232,20 +237,20 @@ class DatabaseManager:
         self.logger.debug("Updating Trade Data.")
         locations, prices = self.get_json_strings(*trade_data)
 
-        query = self.sql_alchemy_session.query(TradeData)
+        query = self.sql_alchemy_session.query(database_models.TradeData)
         try:
             old_data = query.one()
             old_data.locations = locations
             old_data.prices = prices
         except exc.NoResultFound:
             self.logger.debug("No Trade Data in database. Creating object.")
-            self.sql_alchemy_session.add(TradeData(locations=locations, prices=prices))
+            self.sql_alchemy_session.add(database_models.TradeData(locations=locations, prices=prices))
         except exc.MultipleResultsFound:
             self.logger.error("Multiple Trade Data objects in database!")
         self.sql_alchemy_session.commit()
 
     def get_trade_data(self):
-        query = self.sql_alchemy_session.query(TradeData)
+        query = self.sql_alchemy_session.query(database_models.TradeData)
         try:
             old_data = query.one()
             return self.get_objects_from_json_strings(
@@ -259,9 +264,26 @@ class DatabaseManager:
 
     def thread_is_new(self, thread_id, subject, url):
         try:
-            self.sql_alchemy_session.add(FoundForumThreads(id=thread_id, subject=subject, url=url))
+            self.sql_alchemy_session.add(database_models.FoundForumThreads(id=thread_id, subject=subject, url=url))
             self.sql_alchemy_session.commit()
             return True
         except sqlalchemy.exc.IntegrityError:
             self.sql_alchemy_session.rollback()
             return False
+
+    def rsi_video_is_new(self, url):
+        self.logger.debug("Updating RSI video url.")
+        query = self.sql_alchemy_session.query(database_models.RsiLatestYouTubeVideo)
+        video_is_new = True
+        try:
+            old_data = query.one()
+            video_is_new = old_data.url != url
+        except exc.NoResultFound:
+            self.logger.debug("No RSI video data in database. Creating object.")
+            self.sql_alchemy_session.add(database_models.RsiLatestYouTubeVideo(url=url))
+        except exc.MultipleResultsFound:
+            self.logger.error("Multiple RSI video objects in database! Clearing old data.")
+            query.delete()
+            self.sql_alchemy_session.add(database_models.RsiLatestYouTubeVideo(url=url))
+        self.sql_alchemy_session.commit()
+        return video_is_new
