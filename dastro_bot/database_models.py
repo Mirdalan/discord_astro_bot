@@ -79,3 +79,10 @@ class FoundForumThreads(Base):
     id = Column(Integer, primary_key=True)
     subject = Column(Text)
     url = Column(Text)
+
+
+class RsiLatestYouTubeVideo(Base):
+    __tablename__ = 'rsi_you_tube_video'
+
+    id = Column(Integer, primary_key=True)
+    url = Column(Text)
