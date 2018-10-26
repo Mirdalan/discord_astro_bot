@@ -278,6 +278,8 @@ class DatabaseManager:
         try:
             old_data = query.one()
             video_is_new = old_data.url != url
+            if video_is_new:
+                old_data.url = url
         except exc.NoResultFound:
             self.logger.debug("No RSI video data in database. Creating object.")
             self.sql_alchemy_session.add(database_models.RsiLatestYouTubeVideo(url=url))
