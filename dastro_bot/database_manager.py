@@ -272,20 +272,10 @@ class DatabaseManager:
             return False
 
     def rsi_video_is_new(self, url):
-        self.logger.debug("Updating RSI video url.")
-        query = self.sql_alchemy_session.query(database_models.RsiLatestYouTubeVideo)
-        video_is_new = True
         try:
-            old_data = query.one()
-            video_is_new = old_data.url != url
-            if video_is_new:
-                old_data.url = url
-        except exc.NoResultFound:
-            self.logger.debug("No RSI video data in database. Creating object.")
-            self.sql_alchemy_session.add(database_models.RsiLatestYouTubeVideo(url=url))
-        except exc.MultipleResultsFound:
-            self.logger.error("Multiple RSI video objects in database! Clearing old data.")
-            query.delete()
-            self.sql_alchemy_session.add(database_models.RsiLatestYouTubeVideo(url=url))
-        self.sql_alchemy_session.commit()
-        return video_is_new
+            self.sql_alchemy_session.add(database_models.RsiLatestVideo(url=url))
+            self.sql_alchemy_session.commit()
+            return True
+        except sqlalchemy.exc.IntegrityError:
+            self.sql_alchemy_session.rollback()
+            return False
