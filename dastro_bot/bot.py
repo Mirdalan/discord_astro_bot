@@ -73,6 +73,8 @@ class StarCitizenAssistant(BaseBot):
         if ship_data:
             self.database_manager.add_one_ship(ship_data, event.author)
             self.show_updated_member_ships(event)
+        else:
+            event.channel.send_message(self.messages.ship_not_exists % self.mention_user(event.author))
 
     @Plugin.command('remove_ship', '<ship:str...>',
                     docstring="Manually remove ship from member fleet, e.g. 'remove_ship Herald LTI'")
@@ -84,6 +86,8 @@ class StarCitizenAssistant(BaseBot):
                 self.show_updated_member_ships(event)
             else:
                 event.channel.send_message(self.messages.member_ship_not_found % self.mention_user(event.author))
+        else:
+            event.channel.send_message(self.messages.ship_not_exists % self.mention_user(event.author))
 
     @Plugin.command('clear my ships', docstring="Manually clear member fleet.")
     @Plugin.command(additional_commands.clear_member_ships)
