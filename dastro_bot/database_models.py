@@ -81,8 +81,8 @@ class FoundForumThreads(Base):
     url = Column(Text)
 
 
-class RsiLatestYouTubeVideo(Base):
-    __tablename__ = 'rsi_you_tube_video'
+class RsiLatestVideo(Base):
+    __tablename__ = 'rsi_latest_video'
 
     id = Column(Integer, primary_key=True)
-    url = Column(Text)
+    url = Column(Text, unique=True)
