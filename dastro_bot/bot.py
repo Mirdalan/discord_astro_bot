@@ -121,7 +121,7 @@ class StarCitizenAssistant(BaseBot, Plugin):
     @Plugin.command(additional_commands.ship, '<query:str...>')
     def check_ship_info(self, event, query):
         found_ship = self.get_ship_data_from_name(query)
-        if isinstance(found_ship, list) and (1 < len(found_ship) < 7):
+        if isinstance(found_ship, list) and (1 < len(found_ship) < self.max_ships):
             for message in self.split_compare_if_too_long(found_ship):
                 event.channel.send_message(message)
         elif isinstance(found_ship, dict):
@@ -141,7 +141,7 @@ class StarCitizenAssistant(BaseBot, Plugin):
                 found_ships += ship_data
             elif isinstance(ship_data, dict):
                 found_ships.append(ship_data)
-        if isinstance(found_ships, list) and len(found_ships) < 17:
+        if isinstance(found_ships, list) and len(found_ships) < self.max_ships:
             for message in self.split_compare_if_too_long(found_ships):
                 event.channel.send_message(message)
         else:

@@ -17,6 +17,7 @@ class BaseBot:
     main_channel_id = settings.CHANNELS['main']
     messages = settings.messages
     max_characters = settings.MESSAGE_MAX_CHARACTERS
+    max_ships = settings.MESSAGE_MAX_SHIPS
     ship_data_headers = settings.SHIP_DATA_HEADERS
 
     def __init__(self):
