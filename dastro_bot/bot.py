@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 from disco.bot import Plugin
 from tabulate import tabulate
 
@@ -63,31 +61,7 @@ class StarCitizenAssistant(BaseBot, Plugin):
                                 help="Do not stack same models. Show every single ship in seperate row.")
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def show_fleet(self, event, args):
-        if args.all_ships:
-            ships = self.database_manager.get_all_ships_dicts()
-        else:
-            ships = self.database_manager.get_ships_summary()
-
-        if args.order_by:
-            columns = args.order_by.split(",")
-            columns.reverse()
-        else:
-            columns = ["name", "manufacturer"]
-        for column in columns:
-            ships = sorted(ships, key=itemgetter(column))
-        if args.descending:
-            ships.reverse()
-
-        if args.filter:
-            filters = args.filter.split(",")
-            for item in filters:
-                key, expected_value = item.split("=")
-                ships = [ship for ship in ships if expected_value.lower() in str(ship[key]).lower()]
-
-        if args.help:
-            return event.channel.send_message("```%s```" % event.parser.format_help())
-
-        for table in self.get_fleet_tables(ships):
+        for table in self.get_fleet_tables(event, args):
             event.channel.send_message("```%s```" % table)
 
     @Plugin.command('member_fleet', '<member_name:str>', docstring="Lists ships owned by specified member.")
@@ -167,7 +141,7 @@ class StarCitizenAssistant(BaseBot, Plugin):
                 found_ships += ship_data
             elif isinstance(ship_data, dict):
                 found_ships.append(ship_data)
-        if isinstance(found_ships, list) and len(found_ships) < 7:
+        if isinstance(found_ships, list) and len(found_ships) < 17:
             for message in self.split_compare_if_too_long(found_ships):
                 event.channel.send_message(message)
         else:
@@ -192,27 +166,12 @@ class StarCitizenAssistant(BaseBot, Plugin):
                                 help="Lists available categories and versions.")
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def road_map(self, event, args):
-        self.logger.debug("Requested Roadmap.")
-        if args.category and args.version:
-            result = self.rsi_data.road_map.get_release_category_details(args.version, args.category)
-            self.show_road_map_data(event, result)
-        elif args.version:
-            result = self.rsi_data.road_map.get_release_details(args.version)
-            self.show_road_map_data(event, result, find=args.find)
-        elif args.category:
-            result = self.rsi_data.road_map.get_category_details(args.category)
-            self.show_road_map_data(event, result, find=args.find)
-        elif args.list:
-            result = self.rsi_data.road_map.get_releases_and_categories()
-            event.channel.send_message("```%s```" % tabulate(result, headers='keys', tablefmt="fancy_grid"))
-        elif args.help:
+        if args.help:
             event.channel.send_message("```%s```" % event.parser.format_help())
-        elif args.find:
-            result = self.rsi_data.road_map.get()
-            self.show_road_map_data(event, result, find=args.find)
         else:
-            result = self.rsi_data.road_map.get_releases()
-            event.channel.send_message("```%s```" % tabulate(result, headers='keys', tablefmt="fancy_grid"))
+            self.logger.debug("Requested Roadmap.")
+            for message in self.get_road_map_messages(args):
+                event.channel.send_message(message)
 
     @Plugin.command('trade', parser=True, docstring="Trade assistant. Try 'trade -h' for more details.")
     @Plugin.command(additional_commands.trade, parser=True)
@@ -229,25 +188,5 @@ class StarCitizenAssistant(BaseBot, Plugin):
     def trade_route(self, event, args):
         if args.help:
             event.channel.send_message("```%s```" % event.parser.format_help())
-            return
-        budget = 1000000000
-        cargo = 1000000000
-        exclude = set()
-        if args.budget:
-            budget = float(args.budget)
-            if budget < 1:
-                budget = 1
-        if args.cargo:
-            cargo = int(args.cargo)
-            if cargo < 1:
-                cargo = 1
-        if args.exclude:
-            exclude.add(args.exclude)
-        if args.legal:
-            exclude.add("Jumptown")
-
-        result = self.trade.get_trade_routes(cargo, budget,
-                                             exclude=list(exclude),
-                                             start_locations=args.start_location)[:3]
-        for route in result:
-            event.channel.send_message("```%s```" % tabulate(list(route.items()), tablefmt="presto"))
+        else:
+            event.channel.send_message(self.get_trade_messages(args))

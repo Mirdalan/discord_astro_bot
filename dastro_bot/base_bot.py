@@ -1,3 +1,4 @@
+from operator import itemgetter
 import threading
 import time
 
@@ -55,6 +56,14 @@ class BaseBot:
     def mention_channel(channel):
         raise NotImplementedError
 
+    @staticmethod
+    def print_dict_table(items, table_format="presto"):
+        return "```%s```" % tabulate(items, headers='keys', tablefmt=table_format)
+
+    @staticmethod
+    def print_list_table(items, table_format="presto"):
+        return "```%s```" % tabulate(items, tablefmt=table_format)
+
     def split_data_and_get_messages(self, items, get_message_function, *args, **kwargs):
         message = get_message_function(items, *args, **kwargs)
         if len(message) < self.max_characters:
@@ -93,8 +102,32 @@ class BaseBot:
     def clear_member_fleet(self, event):
         self.database_manager.update_member_ships([], event.author)
 
-    def get_fleet_tables(self, ships):
-        return self.split_data_and_get_messages(ships, tabulate, headers='keys', tablefmt="presto")
+    def get_fleet_tables(self, event, args):
+        if args.help:
+            return [event.parser.format_help()]
+
+        if args.all_ships:
+            ships = self.database_manager.get_all_ships_dicts()
+        else:
+            ships = self.database_manager.get_ships_summary()
+
+        if args.filter:
+            filters = args.filter.split(",")
+            for item in filters:
+                key, expected_value = item.split("=")
+                ships = [ship for ship in ships if expected_value.lower() in str(ship[key]).lower()]
+
+        if args.order_by:
+            columns = args.order_by.split(",")
+            columns.reverse()
+        else:
+            columns = ["name", "manufacturer"]
+        for column in columns:
+            ships = sorted(ships, key=itemgetter(column))
+        if args.descending:
+            ships.reverse()
+
+        return self.split_data_and_get_messages(ships, self.print_dict_table)
 
     def get_ship_for_member(self, ship):
         ship_name = ship.replace("lti", "").strip()
@@ -105,17 +138,17 @@ class BaseBot:
 
     def show_invalid_ships(self, event, invalid_ships):
         event.channel.send_message(self.messages.member_ships_invalid % (self.mention_user(event.author)))
-        event.channel.send_message("```%s```" % tabulate(invalid_ships, headers='keys', tablefmt="rst"))
+        event.channel.send_message(self.print_dict_table(invalid_ships, table_format="rst"))
 
     def show_updated_member_ships(self, event):
         ships = self.database_manager.get_ships_dicts_by_member_name(event.author.username)
         event.channel.send_message(self.messages.member_ships_modified % (self.mention_user(event.author)))
-        event.channel.send_message("```%s```" % tabulate(ships, headers='keys', tablefmt="rst"))
+        event.channel.send_message(self.print_dict_table(ships, table_format="rst"))
 
     def get_member_fleet(self, member_name):
         ships = self.database_manager.get_ships_dicts_by_member_name(member_name[:-1])
         if ships:
-            return "```%s```" % tabulate(ships, headers='keys', tablefmt="rst")
+            return self.print_dict_table(ships, table_format="rst")
         else:
             return self.messages.member_not_found
 
@@ -182,36 +215,76 @@ class BaseBot:
             self.report_ship_price()
             time.sleep(300)
 
-    def show_no_road_map_data(self, event):
+    def get_no_road_map_data_found_message(self):
             self.logger.debug("No Roadmap data found...")
-            event.channel.send_message(
-                self.messages.road_map_not_found %
-                tabulate(self.rsi_data.road_map.get_releases_and_categories(), tablefmt="fancy_grid")
-            )
+            return self.messages.road_map_not_found % tabulate(self.rsi_data.road_map.get_releases_and_categories(),
+                                                               tablefmt="fancy_grid")
 
     @staticmethod
-    def data_not_found(data, find):
-        if find:
-            return find.lower() not in data.lower()
+    def data_found(data, find):
+        return (not find) or (find.lower() in data.lower())
 
-    def show_road_map_data(self, event, data, find=None):
+    @staticmethod
+    def get_road_map_table(value, key):
+        return "```\n%s\n```" % tabulate(value, tablefmt="presto", headers=(key, "Task"))
+
+    def get_road_map_data(self, data, find=None):
+        result = []
         if data:
             self.logger.debug("Showing Roadmap...")
             if isinstance(data, str):
-                if self.data_not_found(data, find):
-                    self.show_no_road_map_data(event)
-                    return
-                else:
-                    event.channel.send_message("```%s```" % tabulate(data, tablefmt="fancy_grid"))
+                if self.data_found(data, find):
+                    result = [self.print_dict_table(data, table_format="fancy_grid")]
             elif isinstance(data, dict):
-                message_not_sent = True
                 for key, value in data.items():
-                    if self.data_not_found(key+str(value), find):
-                        continue
-                    event.channel.send_message("```\n%s\n```" %
-                                               tabulate(value, tablefmt="presto", headers=(key, "Task")))
-                    message_not_sent = False
-                if message_not_sent:
-                    self.show_no_road_map_data(event)
+                    if self.data_found(key + str(value), find):
+                        result.append(self.get_road_map_table(value, key))
+        if result:
+            return result
         else:
-            self.show_no_road_map_data(event)
+            return [self.get_no_road_map_data_found_message()]
+
+    def get_road_map_messages(self, args):
+        self.logger.debug("Requested Roadmap.")
+        if args.category and args.version:
+            result = self.rsi_data.road_map.get_release_category_details(args.version, args.category)
+            result = self.get_road_map_data(result)
+        elif args.version:
+            result = self.rsi_data.road_map.get_release_details(args.version)
+            result = self.get_road_map_data(result, find=args.find)
+        elif args.category:
+            result = self.rsi_data.road_map.get_category_details(args.category)
+            result = self.get_road_map_data(result, find=args.find)
+        elif args.list:
+            result = self.rsi_data.road_map.get_releases_and_categories()
+            result = [self.print_dict_table(result, table_format="fancy_grid")]
+        elif args.find:
+            result = self.rsi_data.road_map.get()
+            result = self.get_road_map_data(result, find=args.find)
+        else:
+            result = self.rsi_data.road_map.get_releases()
+            result = [self.print_dict_table(result, table_format="fancy_grid")]
+        return result
+
+    def get_trade_messages(self, args):
+        budget = 1000000000
+        cargo = 1000000000
+        exclude = set()
+        if args.budget:
+            budget = float(args.budget)
+            if budget < 1:
+                budget = 1
+        if args.cargo:
+            cargo = int(args.cargo)
+            if cargo < 1:
+                cargo = 1
+        if args.exclude:
+            exclude.add(args.exclude)
+        if args.legal:
+            exclude.add("Jumptown")
+
+        result = self.trade.get_trade_routes(cargo,
+                                             budget,
+                                             exclude=list(exclude),
+                                             start_locations=args.start_location)
+        return ["```%s```" % tabulate(list(route.items()), tablefmt="presto") for route in result]
