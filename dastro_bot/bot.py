@@ -62,7 +62,7 @@ class StarCitizenAssistant(BaseBot, Plugin):
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def show_fleet(self, event, args):
         for table in self.get_fleet_tables(event, args):
-            event.channel.send_message("```%s```" % table)
+            event.channel.send_message(table)
 
     @Plugin.command('member_fleet', '<member_name:str>', docstring="Lists ships owned by specified member.")
     @Plugin.command(additional_commands.member_ships, '<member_name:str>')
