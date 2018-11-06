@@ -7,7 +7,39 @@ from .base_bot import BaseBot
 from settings import additional_commands
 
 
-class StarCitizenAssistant(BaseBot):
+class StarCitizenAssistant(BaseBot, Plugin):
+    def __init__(self, bot, config):
+        Plugin.__init__(self, bot, config)
+        BaseBot.__init__(self)
+
+    def _get_channel_instance(self, channel_id):
+        return self.client.api.channels_get(self.main_channel_id)
+
+    def _get_help_message(self):
+        header = ["Command", "Description"]
+        rows = []
+        for method in self.meta_funcs:
+            command = " | ".join(" ".join(decorator['args']) for decorator in method.meta
+                                 if decorator['type'] == 'command')
+            if command:
+                for decorator in method.meta:
+                    description = decorator['kwargs'].get('docstring', "")
+                    if description:
+                        rows.append([command, description])
+                        break
+        rows.sort()
+        return "```%s```" % tabulate(rows, headers=header, tablefmt="presto")
+
+    def _get_bot_user(self):
+        return self.bot.client.api.users_me_get()
+
+    @staticmethod
+    def mention_user(user):
+        return '<@' + str(user.id) + '>'
+
+    @staticmethod
+    def mention_channel(channel):
+        return '<#' + str(channel.id) + '>'
 
     @Plugin.listen('MessageCreate')
     def on_message_create(self, event):
@@ -18,7 +50,7 @@ class StarCitizenAssistant(BaseBot):
     @Plugin.command('help', docstring="Shows this help message.")
     @Plugin.command(additional_commands.help)
     def show_help(self, event):
-        event.channel.send_message("```%s```" % self.help_message)
+        event.channel.send_message(self.help_message)
 
     @Plugin.command('fleet', parser=True, docstring="Organization fleet information. Try 'fleet -h' for more details.")
     @Plugin.command(additional_commands.fleet, parser=True)
@@ -53,18 +85,15 @@ class StarCitizenAssistant(BaseBot):
                 ships = [ship for ship in ships if expected_value.lower() in str(ship[key]).lower()]
 
         if args.help:
-            return event.msg.reply("```%s```" % event.parser.format_help())
+            return event.channel.send_message("```%s```" % event.parser.format_help())
 
-        self.send_table_or_split_if_too_big(event, ships)
+        for table in self.get_fleet_tables(ships):
+            event.channel.send_message("```%s```" % table)
 
     @Plugin.command('member_fleet', '<member_name:str>', docstring="Lists ships owned by specified member.")
     @Plugin.command(additional_commands.member_ships, '<member_name:str>')
     def show_member_fleet(self, event, member_name):
-        ships = self.database_manager.get_ships_dicts_by_member_name(member_name[:-1])
-        if ships:
-            event.channel.send_message("```%s```" % tabulate(ships, headers='keys', tablefmt="rst"))
-        else:
-            event.channel.send_message(self.messages.member_not_found)
+        event.channel.send_message(self.get_member_fleet(member_name))
 
     @Plugin.command('add_ship', '<ship:str...>', docstring="Manually add ship to fleet, e.g. 'add_ship Herald LTI'")
     @Plugin.command(additional_commands.add_ship, '<ship:str...>')
@@ -102,9 +131,9 @@ class StarCitizenAssistant(BaseBot):
     def check_ship_price(self, event, query):
         found_ships = self.rsi_data.get_ships_by_query(query)
         if len(found_ships) == 0:
-            event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
+            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
         elif len(found_ships) > 24:
-            event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
+            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
         else:
             prices_messages = []
             for ship in found_ships:
@@ -112,7 +141,7 @@ class StarCitizenAssistant(BaseBot):
                     prices_messages.append(self.get_ship_price_message(ship))
                 except KeyError:
                     prices_messages.append(self.messages.ship_price_unknown % (ship["manufacturer_code"], ship["name"]))
-            event.msg.reply("\n".join(prices_messages))
+            event.channel.send_message("\n".join(prices_messages))
 
     @Plugin.command('ship', '<query:str...>', docstring="Ship details, e.g. 'ship Cutlass Black'")
     @Plugin.command(additional_commands.ship, '<query:str...>')
@@ -120,11 +149,11 @@ class StarCitizenAssistant(BaseBot):
         found_ship = self.get_ship_data_from_name(query)
         if isinstance(found_ship, list) and (1 < len(found_ship) < 7):
             for message in self.split_compare_if_too_long(found_ship):
-                event.msg.reply(message)
+                event.channel.send_message(message)
         elif isinstance(found_ship, dict):
-            event.msg.reply(self.format_ship_data(found_ship))
+            event.channel.send_message(self.format_ship_data(found_ship))
         else:
-            event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
+            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
 
     @Plugin.command('compare', '<query:str...>',
                     docstring="Compare ships details, e.g. 'compare Cutlass Black,Freelancer MAX'")
@@ -140,15 +169,15 @@ class StarCitizenAssistant(BaseBot):
                 found_ships.append(ship_data)
         if isinstance(found_ships, list) and len(found_ships) < 7:
             for message in self.split_compare_if_too_long(found_ships):
-                event.msg.reply(message)
+                event.channel.send_message(message)
         else:
-            event.msg.reply(self.messages.ship_not_exists % (self.mention_user(event.author)))
+            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
 
     @Plugin.command('releases', docstring="Current PU and PTU versions.")
     @Plugin.command(additional_commands.releases)
     def check_current_releases(self, event):
         current_releases = self.rsi_data.get_updated_versions()
-        event.msg.reply(self.get_releases_message(current_releases))
+        event.channel.send_message(self.get_releases_message(current_releases))
         self.database_manager.update_versions(current_releases)
 
     @Plugin.command('roadmap', parser=True, docstring="Roadmap information. Try 'roadmap -h' for more details.")
@@ -175,15 +204,15 @@ class StarCitizenAssistant(BaseBot):
             self.show_road_map_data(event, result, find=args.find)
         elif args.list:
             result = self.rsi_data.road_map.get_releases_and_categories()
-            event.msg.reply("```%s```" % tabulate(result, headers='keys', tablefmt="fancy_grid"))
+            event.channel.send_message("```%s```" % tabulate(result, headers='keys', tablefmt="fancy_grid"))
         elif args.help:
-            event.msg.reply("```%s```" % event.parser.format_help())
+            event.channel.send_message("```%s```" % event.parser.format_help())
         elif args.find:
             result = self.rsi_data.road_map.get()
             self.show_road_map_data(event, result, find=args.find)
         else:
             result = self.rsi_data.road_map.get_releases()
-            event.msg.reply("```%s```" % tabulate(result, headers='keys', tablefmt="fancy_grid"))
+            event.channel.send_message("```%s```" % tabulate(result, headers='keys', tablefmt="fancy_grid"))
 
     @Plugin.command('trade', parser=True, docstring="Trade assistant. Try 'trade -h' for more details.")
     @Plugin.command(additional_commands.trade, parser=True)
@@ -199,7 +228,7 @@ class StarCitizenAssistant(BaseBot):
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def trade_route(self, event, args):
         if args.help:
-            event.msg.reply("```%s```" % event.parser.format_help())
+            event.channel.send_message("```%s```" % event.parser.format_help())
             return
         budget = 1000000000
         cargo = 1000000000
@@ -221,4 +250,4 @@ class StarCitizenAssistant(BaseBot):
                                              exclude=list(exclude),
                                              start_locations=args.start_location)[:3]
         for route in result:
-            event.msg.reply("```%s```" % tabulate(list(route.items()), tablefmt="presto"))
+            event.channel.send_message("```%s```" % tabulate(list(route.items()), tablefmt="presto"))

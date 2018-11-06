@@ -1,7 +1,6 @@
 import threading
 import time
 
-from disco.bot import Plugin
 from tabulate import tabulate
 import pafy
 
@@ -13,17 +12,17 @@ from .trade_assistant import TradeAssistant
 import settings
 
 
-class BaseBot(Plugin):
+class BaseBot:
     main_channel_id = settings.CHANNELS['main']
     messages = settings.messages
+    max_characters = settings.MESSAGE_MAX_CHARACTERS
     ship_data_headers = settings.SHIP_DATA_HEADERS
 
-    def __init__(self, bot, config):
-        super().__init__(bot, config)
+    def __init__(self):
         self.logger = MyLogger(log_file_name=settings.LOG_FILE, logger_name=settings.LOGGER_NAME, prefix="[BOT]")
 
-        self.channel_main = self.client.api.channels_get(self.main_channel_id)
-        self.bot_user = self.get_bot_user()
+        self.channel_main = self._get_channel_instance(self.main_channel_id)
+        self.bot_user = self._get_bot_user()
 
         self.database_manager = DatabaseManager(log_file=settings.LOG_FILE)
 
@@ -39,31 +38,32 @@ class BaseBot(Plugin):
 
         self.help_message = self._get_help_message()
 
-    def _get_help_message(self):
-        header = ["Command", "Description"]
-        rows = []
-        for method in self.meta_funcs:
-            command = " | ".join(" ".join(decorator['args']) for decorator in method.meta
-                                 if decorator['type'] == 'command')
-            if command:
-                for decorator in method.meta:
-                    description = decorator['kwargs'].get('docstring', "")
-                    if description:
-                        rows.append([command, description])
-                        break
-        rows.sort()
-        return tabulate(rows, headers=header, tablefmt="presto")
+    def _get_channel_instance(self, channel_id):
+        raise NotImplementedError
 
-    def get_bot_user(self):
-        return self.bot.client.api.users_me_get()
+    def _get_help_message(self):
+        raise NotImplementedError
+
+    def _get_bot_user(self):
+        raise NotImplementedError
 
     @staticmethod
     def mention_user(user):
-        return '<@' + str(user.id) + '>'
+        raise NotImplementedError
 
     @staticmethod
     def mention_channel(channel):
-        return '<#' + str(channel.id) + '>'
+        raise NotImplementedError
+
+    def split_data_and_get_messages(self, items, get_message_function, *args, **kwargs):
+        message = get_message_function(items, *args, **kwargs)
+        if len(message) < self.max_characters:
+            messages = [message]
+        else:
+            half_length = int(len(items) * 0.5)
+            messages = self.split_data_and_get_messages(items[:half_length], get_message_function, *args, **kwargs)
+            messages += self.split_data_and_get_messages(items[half_length:], get_message_function, *args, **kwargs)
+        return messages
 
     def get_ship_data_from_name(self, ship_name):
         ship_data = self.rsi_data.get_ship(ship_name)
@@ -75,11 +75,8 @@ class BaseBot(Plugin):
                 ship_data = found_ships
         return ship_data
 
-    def show_invalid_ships(self, event, invalid_ships):
-        event.channel.send_message(self.messages.member_ships_invalid % (self.mention_user(event.author)))
-        event.channel.send_message("```%s```" % tabulate(invalid_ships, headers='keys', tablefmt="rst"))
-
     def update_fleet(self, event):
+        invalid_ships = None
         for file in event.attachments.values():
             self.logger.debug("Checking file %s." % file.filename)
             try:
@@ -89,25 +86,15 @@ class BaseBot(Plugin):
                     ships, invalid_ships = self.rsi_data.verify_ships(ships)
                     self.database_manager.update_member_ships(ships, event.author)
 
-                    if invalid_ships:
-                        self.show_invalid_ships(event, invalid_ships)
-                    self.show_updated_member_ships(event)
-
             except Exception as unexpected_exception:
                 self.logger.error(str(unexpected_exception))
+        return invalid_ships
 
     def clear_member_fleet(self, event):
         self.database_manager.update_member_ships([], event.author)
 
-    def send_table_or_split_if_too_big(self, event, ships):
-        table = tabulate(ships, headers='keys', tablefmt="presto")
-        half_length = int(len(ships) / 2)
-        if len(table) > 2000:
-            self.send_table_or_split_if_too_big(event, ships[:half_length])
-            self.send_table_or_split_if_too_big(event, ships[half_length:])
-        else:
-            event.msg.reply("```%s```" % table)
-            self.logger.debug("Sending table with ships: %d, chars: %d." % (len(ships), len(table)))
+    def get_fleet_tables(self, ships):
+        return self.split_data_and_get_messages(ships, tabulate, headers='keys', tablefmt="presto")
 
     def get_ship_for_member(self, ship):
         ship_name = ship.replace("lti", "").strip()
@@ -116,10 +103,21 @@ class BaseBot(Plugin):
             ship_data['lti'] = ship[-3:].lower() == "lti"
             return ship_data
 
+    def show_invalid_ships(self, event, invalid_ships):
+        event.channel.send_message(self.messages.member_ships_invalid % (self.mention_user(event.author)))
+        event.channel.send_message("```%s```" % tabulate(invalid_ships, headers='keys', tablefmt="rst"))
+
     def show_updated_member_ships(self, event):
         ships = self.database_manager.get_ships_dicts_by_member_name(event.author.username)
         event.channel.send_message(self.messages.member_ships_modified % (self.mention_user(event.author)))
         event.channel.send_message("```%s```" % tabulate(ships, headers='keys', tablefmt="rst"))
+
+    def get_member_fleet(self, member_name):
+        ships = self.database_manager.get_ships_dicts_by_member_name(member_name[:-1])
+        if ships:
+            return "```%s```" % tabulate(ships, headers='keys', tablefmt="rst")
+        else:
+            return self.messages.member_not_found
 
     @staticmethod
     def get_ship_price_message(ship):
@@ -138,14 +136,7 @@ class BaseBot(Plugin):
         return "\n```%s```\n" % tabulate(table)
 
     def split_compare_if_too_long(self, ships):
-        message = self.compare_ships_data(ships)
-        if len(message) < 2000:
-            messages = [message]
-        else:
-            half_length = int(len(ships) * 0.5)
-            messages = self.split_compare_if_too_long(ships[:half_length])
-            messages += self.split_compare_if_too_long(ships[half_length:])
-        return messages
+        return self.split_data_and_get_messages(ships, self.compare_ships_data)
 
     def report_ship_price(self):
         for ship_name, price_limit in self.report_ship_price_list:
@@ -193,8 +184,10 @@ class BaseBot(Plugin):
 
     def show_no_road_map_data(self, event):
             self.logger.debug("No Roadmap data found...")
-            event.msg.reply(self.messages.road_map_not_found %
-                            tabulate(self.rsi_data.road_map.get_releases_and_categories(), tablefmt="fancy_grid"))
+            event.channel.send_message(
+                self.messages.road_map_not_found %
+                tabulate(self.rsi_data.road_map.get_releases_and_categories(), tablefmt="fancy_grid")
+            )
 
     @staticmethod
     def data_not_found(data, find):
@@ -209,13 +202,14 @@ class BaseBot(Plugin):
                     self.show_no_road_map_data(event)
                     return
                 else:
-                    event.msg.reply("```%s```" % tabulate(data, tablefmt="fancy_grid"))
+                    event.channel.send_message("```%s```" % tabulate(data, tablefmt="fancy_grid"))
             elif isinstance(data, dict):
                 message_not_sent = True
                 for key, value in data.items():
                     if self.data_not_found(key+str(value), find):
                         continue
-                    event.msg.reply("```\n%s\n```" % tabulate(value, tablefmt="presto", headers=(key, "Task")))
+                    event.channel.send_message("```\n%s\n```" %
+                                               tabulate(value, tablefmt="presto", headers=(key, "Task")))
                     message_not_sent = False
                 if message_not_sent:
                     self.show_no_road_map_data(event)
