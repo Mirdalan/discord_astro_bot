@@ -1,1 +1,1 @@
-from .bot import StarCitizenAssistant
+from .bot import DiscordBot

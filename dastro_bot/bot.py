@@ -1,11 +1,11 @@
 from disco.bot import Plugin
 from tabulate import tabulate
 
-from .base_bot import BaseBot
+from .star_citizen_assistant import BaseBot
 from settings import additional_commands
 
 
-class StarCitizenAssistant(BaseBot, Plugin):
+class DiscordBot(BaseBot, Plugin):
     def __init__(self, bot, config):
         Plugin.__init__(self, bot, config)
         BaseBot.__init__(self)
@@ -97,21 +97,18 @@ class StarCitizenAssistant(BaseBot, Plugin):
     @Plugin.command('prices', '<query:str...>', docstring="Ships prices in store credits, e.g. 'prices Cutlass'")
     @Plugin.command(additional_commands.prices, '<query:str...>')
     def check_ship_price(self, event, query):
-        for message in self.iterate_ship_prices(query, event.author):
-            event.channel.send_message(message)
+        self.send_messages(event, self.iterate_ship_prices(query, event.author))
 
     @Plugin.command('ship', '<query:str...>', docstring="Ship details, e.g. 'ship Cutlass Black'")
     @Plugin.command(additional_commands.ship, '<query:str...>')
     def check_ship_info(self, event, query):
-        for message in self.iterate_ship_info(query, event.author):
-            event.channel.send_message(message)
+        self.send_messages(event, self.iterate_ship_info(query, event.author))
 
     @Plugin.command('compare', '<query:str...>',
                     docstring="Compare ships details, e.g. 'compare Cutlass Black,Freelancer MAX'")
     @Plugin.command(additional_commands.compare, '<query:str...>')
     def compare_ships(self, event, query):
-        for message in self.iterate_ships_comparison(query, event.author):
-            event.channel.send_message(message)
+        self.send_messages(event, self.iterate_ships_comparison(query, event.author))
 
     @Plugin.command('releases', docstring="Current PU and PTU versions.")
     @Plugin.command(additional_commands.releases)
@@ -134,8 +131,7 @@ class StarCitizenAssistant(BaseBot, Plugin):
             event.channel.send_message("```%s```" % event.parser.format_help())
         else:
             self.logger.debug("Requested Roadmap.")
-            for message in self.get_road_map_messages(args):
-                event.channel.send_message(message)
+            self.send_messages(event, self.get_road_map_messages(args))
 
     @Plugin.command('trade', parser=True, docstring="Trade assistant. Try 'trade -h' for more details.")
     @Plugin.command(additional_commands.trade, parser=True)
@@ -153,4 +149,4 @@ class StarCitizenAssistant(BaseBot, Plugin):
         if args.help:
             event.channel.send_message("```%s```" % event.parser.format_help())
         else:
-            event.channel.send_message(self.get_trade_messages(args))
+            self.send_messages(event, self.get_trade_messages(args))
