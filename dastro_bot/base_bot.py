@@ -172,6 +172,34 @@ class BaseBot:
     def split_compare_if_too_long(self, ships):
         return self.split_data_and_get_messages(ships, self.compare_ships_data)
 
+    def get_author_if_given(self, author):
+        if author:
+            return self.mention_user(author)
+        else:
+            return ""
+
+    def iterate_ship_info(self, query, author=None):
+        found_ship = self.get_ship_data_from_name(query)
+        if isinstance(found_ship, list) and (1 < len(found_ship) < self.max_ships):
+            for message in self.split_compare_if_too_long(found_ship):
+                yield message
+        elif isinstance(found_ship, dict):
+            yield self.format_ship_data(found_ship)
+        else:
+            yield self.messages.ship_not_exists % self.get_author_if_given(author)
+
+    def iterate_ships_comparison(self, query, author=None):
+        names = query.split(",")
+        found_ships = []
+        for name in names:
+            for ship_data in self.rsi_data.get_ships_by_query(name.strip()):
+                found_ships.append(ship_data)
+        if isinstance(found_ships, list) and len(found_ships) < self.max_ships:
+            for message in self.split_compare_if_too_long(found_ships):
+                yield message
+        else:
+            yield self.messages.ship_not_exists % self.get_author_if_given(author)
+
     def report_ship_price(self):
         for ship_name, price_limit in self.report_ship_price_list:
             ship_data = self.rsi_data.get_ship(ship_name)
@@ -188,7 +216,7 @@ class BaseBot:
         new_version_released = self.database_manager.update_versions(current_releases)
 
         if new_version_released:
-            new_release_message = self.get_releases_message(current_releases)
+            new_release_message = self.update_releases()
             new_release_message = self.messages.new_version % new_release_message
             self.channel_main.send_message(new_release_message)
 
@@ -199,8 +227,9 @@ class BaseBot:
             for thread in new_threads:
                 self.channel_main.send_message(thread)
 
-    @staticmethod
-    def get_releases_message(current_releases):
+    def update_releases(self):
+        current_releases = self.rsi_data.get_updated_versions()
+        self.database_manager.update_versions(current_releases)
         return "PU Live: %s\nPTU: %s\n" % (current_releases.get('live'), current_releases.get('ptu'))
 
     def monitor_youtube_channel(self):

@@ -120,39 +120,20 @@ class StarCitizenAssistant(BaseBot, Plugin):
     @Plugin.command('ship', '<query:str...>', docstring="Ship details, e.g. 'ship Cutlass Black'")
     @Plugin.command(additional_commands.ship, '<query:str...>')
     def check_ship_info(self, event, query):
-        found_ship = self.get_ship_data_from_name(query)
-        if isinstance(found_ship, list) and (1 < len(found_ship) < self.max_ships):
-            for message in self.split_compare_if_too_long(found_ship):
-                event.channel.send_message(message)
-        elif isinstance(found_ship, dict):
-            event.channel.send_message(self.format_ship_data(found_ship))
-        else:
-            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
+        for message in self.iterate_ship_info(query, event.author):
+            event.channel.send_message(message)
 
     @Plugin.command('compare', '<query:str...>',
                     docstring="Compare ships details, e.g. 'compare Cutlass Black,Freelancer MAX'")
     @Plugin.command(additional_commands.compare, '<query:str...>')
     def compare_ships(self, event, query):
-        names = query.split(",")
-        found_ships = []
-        for name in names:
-            ship_data = self.get_ship_data_from_name(name.strip())
-            if isinstance(ship_data, list):
-                found_ships += ship_data
-            elif isinstance(ship_data, dict):
-                found_ships.append(ship_data)
-        if isinstance(found_ships, list) and len(found_ships) < self.max_ships:
-            for message in self.split_compare_if_too_long(found_ships):
-                event.channel.send_message(message)
-        else:
-            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
+        for message in self.iterate_ships_comparison(query, event.author):
+            event.channel.send_message(message)
 
     @Plugin.command('releases', docstring="Current PU and PTU versions.")
     @Plugin.command(additional_commands.releases)
     def check_current_releases(self, event):
-        current_releases = self.rsi_data.get_updated_versions()
-        event.channel.send_message(self.get_releases_message(current_releases))
-        self.database_manager.update_versions(current_releases)
+        event.channel.send_message(self.update_releases())
 
     @Plugin.command('roadmap', parser=True, docstring="Roadmap information. Try 'roadmap -h' for more details.")
     @Plugin.command(additional_commands.roadmap, parser=True)

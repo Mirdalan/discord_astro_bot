@@ -107,6 +107,7 @@ class RsiDataParser:
                     or query in ship["manufacturer_code"].lower():
                 self.shorten_manufacturer_name(ship)
                 result.append(ship)
+        result.sort(key=lambda item: float(item.get('price', "$999999").replace("$", "")))
         return result
 
     @staticmethod

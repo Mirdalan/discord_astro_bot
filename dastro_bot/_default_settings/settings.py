@@ -15,7 +15,7 @@ CHANNELS = {
     'recruitment': '000000000000000000',
 }
 MESSAGE_MAX_CHARACTERS = 2000
-MESSAGE_MAX_SHIPS = 21
+MESSAGE_MAX_SHIPS = 24
 
 # Database manager
 DATABASE_NAME = "database.sqlite"
