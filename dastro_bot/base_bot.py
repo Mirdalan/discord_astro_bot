@@ -85,28 +85,26 @@ class BaseBot:
                 ship_data = found_ships
         return ship_data
 
-    def update_fleet(self, event):
+    def update_fleet(self, attachments, author):
         invalid_ships = None
-        for file in event.attachments.values():
+        for file in attachments.values():
             self.logger.debug("Checking file %s." % file.filename)
             try:
                 if file.filename == "shiplist.json":
                     self.logger.debug("Getting ships list.")
                     ships = self.attachments_handler.get_ship_list(file.url, self.logger)
                     ships, invalid_ships = self.rsi_data.verify_ships(ships)
-                    self.database_manager.update_member_ships(ships, event.author)
+                    self.database_manager.update_member_ships(ships, author)
 
             except Exception as unexpected_exception:
                 self.logger.error(str(unexpected_exception))
         return invalid_ships
 
-    def clear_member_fleet(self, event):
-        self.database_manager.update_member_ships([], event.author)
+    def clear_member_fleet(self, author):
+        self.database_manager.update_member_ships([], author)
+        return self.database_manager.get_ships_by_member_name(author.username)
 
-    def get_fleet_tables(self, event, args):
-        if args.help:
-            return [event.parser.format_help()]
-
+    def get_fleet_tables(self, args):
         if args.all_ships:
             ships = self.database_manager.get_all_ships_dicts()
         else:
@@ -137,25 +135,65 @@ class BaseBot:
             ship_data['lti'] = ship[-3:].lower() == "lti"
             return ship_data
 
-    def show_invalid_ships(self, event, invalid_ships):
-        event.channel.send_message(self.messages.member_ships_invalid % (self.mention_user(event.author)))
-        event.channel.send_message(self.print_dict_table(invalid_ships, table_format="rst"))
+    def add_member_ship(self, ship_query, author):
+        ship_data = self.get_ship_for_member(ship_query)
+        if ship_data:
+            self.database_manager.add_one_ship(ship_data, author)
+            for message in self.iterate_updated_ships_messages(author):
+                yield message
+        else:
+            yield self.messages.ship_not_exists % self.mention_user(author)
 
-    def show_updated_member_ships(self, event):
-        ships = self.database_manager.get_ships_dicts_by_member_name(event.author.username)
-        event.channel.send_message(self.messages.member_ships_modified % (self.mention_user(event.author)))
-        event.channel.send_message(self.print_dict_table(ships, table_format="rst"))
+    def remove_member_ship(self, ship_query, author):
+        ship_data = self.get_ship_for_member(ship_query)
+        if ship_data:
+            if self.database_manager.remove_one_ship(ship_data, author):
+                for message in self.iterate_updated_ships_messages(author):
+                    yield message
+            else:
+                yield self.messages.member_ship_not_found % self.mention_user(author)
+        else:
+            yield self.messages.ship_not_exists % self.mention_user(author)
+
+    def iterate_invalid_ships_messages(self, author, invalid_ships):
+        yield self.messages.member_ships_invalid % (self.mention_user(author))
+        for message in self.split_data_and_get_messages(invalid_ships, self.print_dict_table, table_format="rst"):
+            yield message
+
+    def iterate_updated_ships_messages(self, author):
+        yield self.messages.member_ships_modified % (self.mention_user(author))
+        for message in self.get_member_fleet(author.username):
+            yield message
 
     def get_member_fleet(self, member_name):
-        ships = self.database_manager.get_ships_dicts_by_member_name(member_name[:-1])
+        ships = self.database_manager.get_ships_dicts_by_member_name(member_name)
         if ships:
-            return self.print_dict_table(ships, table_format="rst")
+            for message in self.split_data_and_get_messages(ships, self.print_dict_table, table_format="rst"):
+                yield message
         else:
-            return self.messages.member_not_found
+            yield self.messages.member_not_found
 
     @staticmethod
     def get_ship_price_message(ship):
         return "*%s*  **%s**, price:  %s (+ VAT)" % (ship["manufacturer_code"], ship["name"], ship["price"])
+
+    def get_ship_prices_lines(self, found_ships):
+        prices_lines = []
+        for ship in found_ships:
+            try:
+                prices_lines.append(self.get_ship_price_message(ship))
+            except KeyError:
+                prices_lines.append(self.messages.ship_price_unknown % (ship["manufacturer_code"], ship["name"]))
+        return prices_lines
+
+    def iterate_ship_prices(self, query, author=None):
+        found_ships = self.rsi_data.get_ships_by_query(query)
+        if 0 < len(found_ships) < self.max_ships:
+            price_lines = self.get_ship_prices_lines(found_ships)
+            for message in self.split_data_and_get_messages(price_lines, lambda lines: "\n".join(lines)):
+                yield message
+        else:
+            yield self.messages.ship_not_exists % self.get_author_if_given(author)
 
     def format_ship_data(self, ship):
         table = [[key, ship.get(key, "unknown")] for key in self.ship_data_headers]

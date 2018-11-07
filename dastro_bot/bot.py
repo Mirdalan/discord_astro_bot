@@ -39,11 +39,16 @@ class StarCitizenAssistant(BaseBot, Plugin):
     def mention_channel(channel):
         return '<#' + str(channel.id) + '>'
 
+    @staticmethod
+    def send_messages(event, generator):
+        for message in generator:
+            event.channel.send_message(message)
+
     @Plugin.listen('MessageCreate')
     def on_message_create(self, event):
         if event.attachments:
             self.logger.debug("The msg has an attachment. Checking if contains ship list..")
-            self.update_fleet(event)
+            self.update_fleet(event.attachments, event.author)
 
     @Plugin.command('help', docstring="Shows this help message.")
     @Plugin.command(additional_commands.help)
@@ -61,61 +66,39 @@ class StarCitizenAssistant(BaseBot, Plugin):
                                 help="Do not stack same models. Show every single ship in seperate row.")
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def show_fleet(self, event, args):
-        for table in self.get_fleet_tables(event, args):
-            event.channel.send_message(table)
+        if args.help:
+            event.channel.send_message(event.parser.format_help())
+        else:
+            self.send_messages(event, self.get_fleet_tables(args))
 
     @Plugin.command('member_fleet', '<member_name:str>', docstring="Lists ships owned by specified member.")
     @Plugin.command(additional_commands.member_ships, '<member_name:str>')
     def show_member_fleet(self, event, member_name):
-        event.channel.send_message(self.get_member_fleet(member_name))
+        self.send_messages(event, self.get_member_fleet(member_name))
 
     @Plugin.command('add_ship', '<ship:str...>', docstring="Manually add ship to fleet, e.g. 'add_ship Herald LTI'")
     @Plugin.command(additional_commands.add_ship, '<ship:str...>')
     def add_ship(self, event, ship):
-        ship_data = self.get_ship_for_member(ship)
-        if ship_data:
-            self.database_manager.add_one_ship(ship_data, event.author)
-            self.show_updated_member_ships(event)
-        else:
-            event.channel.send_message(self.messages.ship_not_exists % self.mention_user(event.author))
+        self.send_messages(event, self.add_member_ship(ship, event.author))
 
     @Plugin.command('remove_ship', '<ship:str...>',
                     docstring="Manually remove ship from member fleet, e.g. 'remove_ship Herald LTI'")
     @Plugin.command(additional_commands.remove_ship, '<ship:str...>')
     def remove_ship(self, event, ship):
-        ship_data = self.get_ship_for_member(ship)
-        if ship_data:
-            if self.database_manager.remove_one_ship(ship_data, event.author):
-                self.show_updated_member_ships(event)
-            else:
-                event.channel.send_message(self.messages.member_ship_not_found % self.mention_user(event.author))
-        else:
-            event.channel.send_message(self.messages.ship_not_exists % self.mention_user(event.author))
+        self.send_messages(event, self.remove_member_ship(ship, event.author))
 
     @Plugin.command('clear my ships', docstring="Manually clear member fleet.")
     @Plugin.command(additional_commands.clear_member_ships)
     def clear_member_ships(self, event):
-        self.clear_member_fleet(event)
-        ships = self.database_manager.get_ships_by_member_name(event.author.username)
-        if ships:
+        ships_left = self.clear_member_fleet(event.author)
+        if ships_left:
             event.channel.send_message(self.messages.something_went_wrong)
 
     @Plugin.command('prices', '<query:str...>', docstring="Ships prices in store credits, e.g. 'prices Cutlass'")
     @Plugin.command(additional_commands.prices, '<query:str...>')
     def check_ship_price(self, event, query):
-        found_ships = self.rsi_data.get_ships_by_query(query)
-        if len(found_ships) == 0:
-            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
-        elif len(found_ships) > 24:
-            event.channel.send_message(self.messages.ship_not_exists % (self.mention_user(event.author)))
-        else:
-            prices_messages = []
-            for ship in found_ships:
-                try:
-                    prices_messages.append(self.get_ship_price_message(ship))
-                except KeyError:
-                    prices_messages.append(self.messages.ship_price_unknown % (ship["manufacturer_code"], ship["name"]))
-            event.channel.send_message("\n".join(prices_messages))
+        for message in self.iterate_ship_prices(query, event.author):
+            event.channel.send_message(message)
 
     @Plugin.command('ship', '<query:str...>', docstring="Ship details, e.g. 'ship Cutlass Black'")
     @Plugin.command(additional_commands.ship, '<query:str...>')

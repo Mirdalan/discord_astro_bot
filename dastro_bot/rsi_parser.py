@@ -85,7 +85,7 @@ class RsiDataParser:
         if prices:
             for ship in prices:
                 ship_name = ship["name"].lower()
-                self.ships[ship_name]["price"] = ship["msrp"]
+                self.ships[ship_name]["price"] = ship["msrp"].replace(",", "")
 
     def update_prices_periodically(self):
         while self.auto_update_period > 0:
