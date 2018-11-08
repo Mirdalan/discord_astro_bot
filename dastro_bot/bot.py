@@ -1,7 +1,7 @@
 from disco.bot import Plugin
 from tabulate import tabulate
 
-from .base_astro_bot import BaseBot
+from base_astro_bot import BaseBot
 from settings import additional_commands
 
 

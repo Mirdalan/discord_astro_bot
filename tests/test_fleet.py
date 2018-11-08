@@ -2,7 +2,7 @@ import unittest
 import os
 
 from .set_path import *
-from dastro_bot.base_astro_bot.database_manager import DatabaseManager
+from base_astro_bot.database_manager import DatabaseManager
 from tests.sample_ships_data import TEST_SHIPS
 
 

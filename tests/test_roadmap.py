@@ -2,8 +2,8 @@ import unittest
 import os
 
 from .set_path import *
-from dastro_bot.base_astro_bot.database_manager import DatabaseManager
-from dastro_bot.base_astro_bot.rsi_parser import RoadMap
+from base_astro_bot.database_manager import DatabaseManager
+from base_astro_bot.rsi_parser import RoadMap
 
 
 class RoadMapTests(unittest.TestCase):
