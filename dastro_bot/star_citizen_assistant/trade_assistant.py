@@ -138,7 +138,7 @@ class TradeAssistant(PricesStructure):
             if no_go_location in highest_sell_locations:
                 highest_sell_locations.remove(no_go_location)
 
-    def get_trade_routes(self, full_bay, budget, exclude=None, start_locations=None):
+    def get_trade_routes(self, full_bay, budget, exclude=None, start_locations=None, number_of_routes=3):
         if start_locations:
             start_locations = self._get_allowed_locations(start_locations)
 
@@ -177,7 +177,7 @@ class TradeAssistant(PricesStructure):
                 'sell price': highest_sell,
             })
         routes.sort(key=lambda item: item.get('income'), reverse=True)
-        return routes
+        return routes[:number_of_routes]
 
 
 if __name__ == '__main__':

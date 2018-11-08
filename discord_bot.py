@@ -1,5 +1,5 @@
 import dastro_bot
 
 
-class DiscordBot(dastro_bot.StarCitizenAssistant):
+class DiscordBot(dastro_bot.DiscordBot):
     pass

@@ -9,3 +9,4 @@ pafy==0.5.4
 SQLAlchemy==1.2.12
 tabulate==0.8.2
 youtube-dl==2018.10.5
+requests

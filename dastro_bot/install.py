@@ -15,6 +15,7 @@ def deploy_default_files(destination_dir="discord_bot"):
         if os.path.isfile(source_file):
             copyfile(source_file, os.path.join(destination_dir, item))
 
+
 def start_project(name="discord_bot"):
     destination_dir = os.path.join(os.getcwd(), name)
     os.mkdir(destination_dir)

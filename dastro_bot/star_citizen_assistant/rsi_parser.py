@@ -85,7 +85,7 @@ class RsiDataParser:
         if prices:
             for ship in prices:
                 ship_name = ship["name"].lower()
-                self.ships[ship_name]["price"] = ship["msrp"]
+                self.ships[ship_name]["price"] = ship["msrp"].replace(",", "")
 
     def update_prices_periodically(self):
         while self.auto_update_period > 0:
@@ -107,6 +107,7 @@ class RsiDataParser:
                     or query in ship["manufacturer_code"].lower():
                 self.shorten_manufacturer_name(ship)
                 result.append(ship)
+        result.sort(key=lambda item: float(item.get('price', "$999999").replace("$", "")))
         return result
 
     @staticmethod
