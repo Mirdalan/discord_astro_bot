@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 with open("requirements.txt") as f:
@@ -9,7 +9,7 @@ with open("README.md") as f:
 
 setup(
     name='dastro_bot',
-    version='1.0.8.a3',
+    version='1.0.8.a5',
     description='Discord bot for Star Citizen players',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -38,7 +38,7 @@ setup(
             'websocket-client==0.44.0'
         ]
     },
-    packages=['dastro_bot', 'dastro_bot._default_settings'],
+    packages=find_packages(exclude=('tests',)),
     package_data={'': ['discord_bot.json', 'discord_bot.service']},
     include_package_data=True,
     python_requires='~=3.5',
