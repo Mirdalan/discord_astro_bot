@@ -125,6 +125,8 @@ class DiscordBot(BaseBot, Plugin):
                                 help="Find pages with specified expression., eg. '-f carrack'")
     @Plugin.parser.add_argument("-l", "--list", action='store_true',
                                 help="Lists available categories and versions.")
+    @Plugin.parser.add_argument("-u", "--update", action='store_true',
+                                help="Update database with data downloaded from RSI page.")
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def road_map(self, event, args):
         if args.help:

@@ -13,7 +13,8 @@ Messages = namedtuple('Messages', [
     'ship_price_report',
     'new_version',
     'road_map_not_found',
-    'something_went_wrong'
+    'something_went_wrong',
+    'success'
 ])
 
 Commands = namedtuple('Commands', [
@@ -29,7 +30,6 @@ Commands = namedtuple('Commands', [
     'releases',
     'roadmap',
     'trade',
-
 ])
 
 messages_pl = Messages(
@@ -44,7 +44,8 @@ messages_pl = Messages(
     ship_price_report="Czołem!\n *%s* obecnie kosztuje *%s*",
     new_version="Czołem! Przynoszę Wam wieści:\n%s",
     road_map_not_found="Przykro mi, nic takiego nie znalazłem. Posiadam jednakże wiedzę o poniższych:\n```%s```",
-    something_went_wrong="Coś poszło nie tak..."
+    something_went_wrong="Coś poszło nie tak...",
+    success="Udało się!",
 )
 
 commands_pl = Commands(
@@ -74,7 +75,8 @@ messages_en = Messages(
     ship_price_report="The price of *%s* is updated to *%s*",
     new_version="Howdy! I found some news:\n%s",
     road_map_not_found="Sorry, didn't find anything like that. You may try something like:\n```%s```",
-    something_went_wrong="Something went wrong..."
+    something_went_wrong="Something went wrong...",
+    success="Done!",
 )
 
 commands_en = Commands(
