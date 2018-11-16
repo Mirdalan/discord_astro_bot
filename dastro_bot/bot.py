@@ -145,10 +145,13 @@ class DiscordBot(BaseBot, Plugin):
                                 help="Exclude specific trade post, e.g. '-e Jumptown'")
     @Plugin.parser.add_argument('-s', '--start-location', action='store',
                                 help="Find routes only starting from given location, e.g. '-s levski', '-s crusader'")
-    @Plugin.parser.add_argument('-l', '--legal', action='store_true', help="Include only legal cargo, e.g. '-l'")
+    @Plugin.parser.add_argument('-l', '--legal', action='store_true', help="Include only legal cargo.")
+    @Plugin.parser.add_argument('-u', '--update', action='store_true', help="Update prices database.")
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def trade_route(self, event, args):
         if args.help:
             event.channel.send_message("```%s```" % event.parser.format_help())
+        elif args.update:
+            event.channel.send_message("```%s```" % self.update_trade_data())
         else:
             self.send_messages(event, self.get_trade_messages(args))
