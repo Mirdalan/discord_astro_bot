@@ -21,6 +21,9 @@ MESSAGE_MAX_SHIPS = 24
 DATABASE_NAME = "database.sqlite"
 DATABASE_DIALECT = 'sqlite:///%s'
 
+# MongoDB
+MONGO_CONNECTION_STRING = "mongodb://127.0.0.1:27017"
+
 # RSI DATA PARSER
 BASE_URL = "https://robertsspaceindustries.com"
 SHIP_DATA_HEADERS = ['manufacturer', 'name', 'price', 'focus', 'production_status', 'length', 'beam', 'height',
@@ -35,9 +38,9 @@ API_INIT_URL = BASE_URL + "/roadmap/board/1-Star-Citizen"
 ROAD_MAP_URL = BASE_URL + "/api/roadmap/v1/boards/1"
 FORUM_SEARCH_URL = BASE_URL + "/api/spectrum/search/content/extended"
 FORUM_SEARCH_PAYLOAD = {
-    "community_id":"1",
-    "highlight_role_id":"2",
-    "type": ["","op"],
+    "community_id": "1",
+    "highlight_role_id": "2",
+    "type": ["", "op"],
     "text": "",
     "page": 1,
     "sort": "latest",
@@ -52,37 +55,4 @@ REPORT_SHIP_PRICE_LIST = [
         ]
 
 # Trade Assistant
-TRADE_GOOGLE_SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-TRADE_SPREADSHEET_ID = '16vZzeCHnDIVRmKeqN4VHqy5Rm3nkkLrsig2odQTxuNo'
-TRADE_SPREADSHEET_CELLS_RANGE = 'B3:CD31'
-TRADE_SC_RELEASE = '3.3.5 in progess'
-TRADE_COMMODITIES = {
-        "Agricium",
-        "Agricultural",
-        "Supply",
-        "Aluminum",
-        "Altruciatoxine",
-        "Astatine",
-        "Beryl",
-        "Chlorine",
-        "Corundum",
-        "Diamond",
-        "Distilled",
-        "Spirits",
-        "Fluorine",
-        "Gold",
-        "Hydrogen",
-        "Iodine",
-        "Laranite",
-        "Medical",
-        "Supply",
-        "Processed",
-        "Food",
-        "Quartz",
-        "Scrap",
-        "Stims",
-        "Titanium",
-        "Tungsten",
-        "Waste",
-        "Widow",
-    }
+SCM_TOKEN = "YOURTOKEN"
