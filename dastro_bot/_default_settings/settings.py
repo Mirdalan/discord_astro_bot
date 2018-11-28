@@ -21,6 +21,9 @@ MESSAGE_MAX_SHIPS = 24
 DATABASE_NAME = "database.sqlite"
 DATABASE_DIALECT = 'sqlite:///%s'
 
+# MongoDB
+MONGO_CONNECTION_STRING = "mongodb://127.0.0.1:27017"
+
 # RSI DATA PARSER
 BASE_URL = "https://robertsspaceindustries.com"
 SHIP_DATA_HEADERS = ['manufacturer', 'name', 'price', 'focus', 'production_status', 'length', 'beam', 'height',

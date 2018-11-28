@@ -141,10 +141,12 @@ class DiscordBot(BaseBot, Plugin):
                                 help="How much UEC you can spend, e.g. '-b 3000'")
     @Plugin.parser.add_argument('-c', '--cargo', action='store',
                                 help="How much SCU you have available, e.g. '-c 46'")
-    @Plugin.parser.add_argument('-e', '--exclude', action='store',
-                                help="Exclude specific trade post, e.g. '-e Jumptown'")
+    @Plugin.parser.add_argument('-a', '--avoid', action='store',
+                                help="Avoid specific trade post, e.g. '-a Jumptown'")
     @Plugin.parser.add_argument('-s', '--start-location', action='store',
                                 help="Find routes only starting from given location, e.g. '-s levski', '-s crusader'")
+    @Plugin.parser.add_argument('-e', '--end-location', action='store',
+                                help="Find routes only ending at given location, e.g. '-e olisar', '-s hurston'")
     @Plugin.parser.add_argument('-l', '--legal', action='store_true', help="Include only legal cargo.")
     @Plugin.parser.add_argument('-u', '--update', action='store_true', help="Update prices database.")
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
