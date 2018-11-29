@@ -1,7 +1,7 @@
 version: 2
 jobs:
 
-  test:
+  test: &test-template
     docker:
     - image: circleci/python:3.6
 
@@ -33,6 +33,15 @@ jobs:
          paths:
            - ./venv
          key: test-dependencies-{{ checksum "requirements.txt" }}
+
+  test-3.5:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.5
+  test-3.7:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.7
 
   publish:
     docker:
@@ -78,6 +87,8 @@ workflows:
   build_test_publish:
     jobs:
       - test
+      - test-3.5
+      - test-3.7
       - publish:
           requires:
             - test

@@ -14,21 +14,25 @@ This project contains python bot project for Discord, useful for Star Citizen pl
  Displaying info for a specific release or Road Map category.
  1. Displaying current SC releases (PU and PTU) according to Road Map version.
  1. Thread monitoring changes in current SC release on Road Map page and Spectrum forums.
- 1. Trade assistant shows best trade routes for given conditions (budget, cargo, start location).
+ 1. Trade assistant shows best trade routes for given conditions (budget, cargo, start/end location).
+ 1. Mining assistant showing resources prices.
  
  If your bot is running use the `help` command to see all available commands. 
 
-### Dependencies
+### Prerequisites
 * Python 3.5+
+* MongoDB - for storing data cache
+* Some SQL database if you don't want to use default SQLite
+
+### Dependencies
 * aiohttp 3.4.4
 * async-timeout 3.0.1
 * disco-py 0.0.12
-* google-api-python-client 1.7.4
-* google-auth 1.5.1
-* google-auth-httplib2 0.0.3
-* oauth2client 4.1.3
+* pafy 0.5.4
+* pymongo 3.7.2
 * SQLAlchemy 1.2.12
 * tabulate 0.8.2
+* youtube-dl 2018.10.5
 
 ### Installation
 
@@ -41,7 +45,7 @@ The second command generates default configuration files to run your own BOT:
 * discord_bot.py - basic bot class
 * discord_bot.service - systemd unit file
 * languages.py - named tuples with translation 
-* settings.py - custom settings for your server
+* settings.py - custom settings for your bot
 
 ### Basic Configuration
 Here's what you absolutely need to configure to run the bot:
@@ -54,28 +58,25 @@ Here's what you absolutely need to configure to run the bot:
 * discord_bot.service
   * if you want to setup a systemd service
 
-#### Google Spreadsheet
-Google spreadsheeet API is used to read trade data created by community.
-In current version it supports this spreadsheet:
-* https://www.reddit.com/r/starcitizen/comments/8vrrxv/320_full_trading_sheet_by_kamille92/
+#### Trade and mining data
+All raw data for these features is pulled from this project API:   
+https://scm.oceandatarat.org  
+I strongly encourage to use this page for prices and other data reporting or to 
+contribute in any other way to the linked project.
+Please create your own account on that page and set the `SCM_TOKEN` in 
+settings.py accordingly.
 
-Which is already outdated. However the source of trade data will need to be updated soon[TM] 
-anyway, after SC 3.3 release.  
-
-In order to properly use the google spreadsheet data source please follow the following tutorial:
-* https://developers.google.com/sheets/api/quickstart/python
-
-Then please rename two json files to:
-```text
-google_credentials.json
-google_token.json
-```
-
-#### Database
-Astro Bot uses SQL Alchemy to handle database and SQLite database is used by default. If you want to use 
-different database then please adjust `settings.py` file accordingly. 
+#### SQL Database
+Astro Bot uses SQL Alchemy to handle database and SQLite database is 
+used by default. If you want to use different database then please 
+adjust `settings.py` file accordingly.  
 There are two parameters there which are used to configure database:
 ```text
 DATABASE_NAME
 DATABASE_DIALECT
 ```
+
+#### MongoDB
+Mongo is used to store cache data (in case if external data sources are unavailable). 
+It works with default settings. If you need to customize it find `MONGO_CONNECTION_STRING`
+in settings.py 

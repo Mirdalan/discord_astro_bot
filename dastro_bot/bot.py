@@ -2,12 +2,15 @@ from disco.bot import Plugin
 from tabulate import tabulate
 
 from base_astro_bot import BaseBot
+
+from .attachments_downloader import DiscordAttachmentHandler
 from settings import additional_commands
 
 
 class DiscordBot(BaseBot, Plugin):
     def __init__(self, bot, config):
         Plugin.__init__(self, bot, config)
+        self.attachments_handler = DiscordAttachmentHandler()
         BaseBot.__init__(self)
 
     def _get_channel_instance(self, channel_id):
@@ -43,6 +46,21 @@ class DiscordBot(BaseBot, Plugin):
     def send_messages(event, generator):
         for message in generator:
             event.channel.send_message(message)
+
+    def update_fleet(self, attachments, author):
+        invalid_ships = None
+        for file in attachments.values():
+            self.logger.debug("Checking file %s." % file.filename)
+            try:
+                if file.filename == "shiplist.json":
+                    self.logger.debug("Getting ships list.")
+                    ships = self.attachments_handler.get_ship_list(file.url, self.logger)
+                    ships, invalid_ships = self.rsi_data.verify_ships(ships)
+                    self.database_manager.update_member_ships(ships, author)
+
+            except Exception as unexpected_exception:
+                self.logger.error(str(unexpected_exception))
+        return invalid_ships
 
     @Plugin.listen('MessageCreate')
     def on_message_create(self, event):
