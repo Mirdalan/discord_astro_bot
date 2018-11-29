@@ -30,6 +30,7 @@ Commands = namedtuple('Commands', [
     'releases',
     'roadmap',
     'trade',
+    'mining',
 ])
 
 messages_pl = Messages(
@@ -61,6 +62,7 @@ commands_pl = Commands(
     releases="wersje",
     roadmap="obiecanki",
     trade="handel",
+    mining="kopanie",
 )
 
 messages_en = Messages(
@@ -92,4 +94,5 @@ commands_en = Commands(
     releases="releases",
     roadmap="roadmap",
     trade="trade",
+    mining="mining",
 )

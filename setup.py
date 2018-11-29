@@ -9,7 +9,7 @@ with open("README.md") as f:
 
 setup(
     name='dastro_bot',
-    version='1.1.1',
+    version='1.1.2',
     description='Discord bot for Star Citizen players',
     long_description=long_description,
     long_description_content_type="text/markdown",

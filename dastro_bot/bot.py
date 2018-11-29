@@ -157,3 +157,18 @@ class DiscordBot(BaseBot, Plugin):
             event.channel.send_message("```%s```" % self.update_trade_data())
         else:
             self.send_messages(event, self.get_trade_messages(args))
+
+    @Plugin.command('mining', parser=True, docstring="Mining assistant. By default shows top prices for each resource. "
+                                                     "Try 'mining -h' for more details.")
+    @Plugin.command(additional_commands.mining, parser=True)
+    @Plugin.parser.add_argument("-r", "--resource", action='store',
+                                help="Show all prices for given resource, e.g. '-r laranite'")
+    @Plugin.parser.add_argument('-u', '--update', action='store_true', help="Update prices database.")
+    @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
+    def mining_prices(self, event, args):
+        if args.help:
+            event.channel.send_message("```%s```" % event.parser.format_help())
+        elif args.update:
+            event.channel.send_message("```%s```" % self.update_trade_data())
+        else:
+            event.channel.send_message(self.get_mining_messages(args.resource))
