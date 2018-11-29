@@ -1,9 +1,8 @@
-aiohttp==3.4.4
-async-timeout==3.0.1
-disco-py==0.0.12
-pafy==0.5.4
-pymongo==3.7.2
-SQLAlchemy==1.2.12
-tabulate==0.8.2
-youtube-dl==2018.10.5
-base_astro_bot>=1.1.2
+aiohttp
+async-timeout
+disco-py
+pafy
+pymongo
+SQLAlchemy
+tabulate
+youtube-dl
