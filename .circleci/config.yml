@@ -92,6 +92,8 @@ workflows:
       - publish:
           requires:
             - test
+            - test-3.5
+            - test-3.7
           filters:
             branches:
               only: master
