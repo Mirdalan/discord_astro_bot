@@ -9,7 +9,7 @@ with open("README.md") as f:
 
 setup(
     name='dastro_bot',
-    version='1.1.5',
+    version='1.1.6',
     description='Discord bot for Star Citizen players',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -36,10 +36,13 @@ setup(
         ],
         ':"linux" in sys_platform': [
             'websocket-client==0.44.0'
+        ],
+        ':python_version=="3.7"': [
+            'gevent==1.3.7'
         ]
     },
     packages=find_packages(exclude=('tests',)),
-    package_data={'': ['discord_bot.json', 'discord_bot.service']},
+    package_data={'_default_settings': ['discord_bot.json', 'discord_bot.service']},
     include_package_data=True,
     python_requires='~=3.5',
 )
