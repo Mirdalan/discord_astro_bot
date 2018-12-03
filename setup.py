@@ -37,8 +37,11 @@ setup(
         ':"linux" in sys_platform': [
             'websocket-client==0.44.0'
         ],
-        ':python_version=="3.7"': [
-            'gevent==1.3.7'
+        ':python_version<"3.7"': [
+            'gevent==1.2.2'
+        ],
+        ':python_version>="3.7"': [
+            'gevent>=1.3.6'
         ]
     },
     packages=find_packages(exclude=('tests',)),
