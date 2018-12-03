@@ -8,6 +8,8 @@ User=discord_bot
 WorkingDirectory=/home/discord_bot/discord_bot
 ExecStart=/usr/bin/python3.6 -m disco.cli --config discord_bot.json --run-bot
 KillMode=process
+Restart=always
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target
