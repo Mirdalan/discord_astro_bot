@@ -1,5 +1,4 @@
 from disco.bot import Plugin
-from tabulate import tabulate
 
 from base_astro_bot import BaseBot
 
@@ -17,19 +16,25 @@ class DiscordBot(BaseBot, Plugin):
         return self.client.api.channels_get(self.main_channel_id)
 
     def _get_help_message(self):
-        header = ["Command", "Description"]
+        header = ["Commands", "Arguments", "Description"]
         rows = []
         for method in self.meta_funcs:
-            command = " | ".join(" ".join(decorator['args']) for decorator in method.meta
-                                 if decorator['type'] == 'command')
-            if command:
+            commands, arguments = [], []
+            for decorator in method.meta:
+                if decorator['type'] == 'command':
+                    commands.append(decorator['args'][0])
+                    if not arguments:
+                        arguments = decorator['args'][1:]
+            commands = " | ".join(commands)
+            arguments = " ".join(arguments)
+            if commands:
                 for decorator in method.meta:
                     description = decorator['kwargs'].get('docstring', "")
                     if description:
-                        rows.append([command, description])
+                        rows.append([commands, arguments, description])
                         break
         rows.sort()
-        return "```%s```" % tabulate(rows, headers=header, tablefmt="presto")
+        return self.split_data_and_get_messages(rows, self.print_list_table, headers=header)
 
     def _get_bot_user(self):
         return self.bot.client.api.users_me_get()
@@ -71,7 +76,7 @@ class DiscordBot(BaseBot, Plugin):
     @Plugin.command('help', docstring="Shows this help message.")
     @Plugin.command(additional_commands.help)
     def show_help(self, event):
-        event.channel.send_message(self.help_message)
+        self.send_messages(event, self.help_messages)
 
     @Plugin.command('fleet', parser=True, docstring="Organization fleet information. Try 'fleet -h' for more details.")
     @Plugin.command(additional_commands.fleet, parser=True)
@@ -94,13 +99,13 @@ class DiscordBot(BaseBot, Plugin):
     def show_member_fleet(self, event, member_name):
         self.send_messages(event, self.get_member_fleet(member_name))
 
-    @Plugin.command('add_ship', '<ship:str...>', docstring="Manually add ship to fleet, e.g. 'add_ship Herald LTI'")
+    @Plugin.command('add_ship', '<ship:str...>', docstring="Add ship to fleet, e.g. 'add_ship Herald LTI'")
     @Plugin.command(additional_commands.add_ship, '<ship:str...>')
     def add_ship(self, event, ship):
         self.send_messages(event, self.add_member_ship(ship, event.author))
 
     @Plugin.command('remove_ship', '<ship:str...>',
-                    docstring="Manually remove ship from member fleet, e.g. 'remove_ship Herald LTI'")
+                    docstring="Remove ship from member fleet, e.g. 'remove_ship Herald LTI'")
     @Plugin.command(additional_commands.remove_ship, '<ship:str...>')
     def remove_ship(self, event, ship):
         self.send_messages(event, self.remove_member_ship(ship, event.author))
@@ -123,7 +128,7 @@ class DiscordBot(BaseBot, Plugin):
         self.send_messages(event, self.iterate_ship_info(query, event.author))
 
     @Plugin.command('compare', '<query:str...>',
-                    docstring="Compare ships details, e.g. 'compare Cutlass Black,Freelancer MAX'")
+                    docstring="Compare ships details, e.g. 'compare Cutlass,Freelancer'")
     @Plugin.command(additional_commands.compare, '<query:str...>')
     def compare_ships(self, event, query):
         self.send_messages(event, self.iterate_ships_comparison(query, event.author))
@@ -176,8 +181,7 @@ class DiscordBot(BaseBot, Plugin):
         else:
             self.send_messages(event, self.get_trade_messages(args))
 
-    @Plugin.command('mining', parser=True, docstring="Mining assistant. By default shows top prices for each resource. "
-                                                     "Try 'mining -h' for more details.")
+    @Plugin.command('mining', parser=True, docstring="Mining assistant. Try 'mining -h' for more details.")
     @Plugin.command(additional_commands.mining, parser=True)
     @Plugin.parser.add_argument("-r", "--resource", action='store',
                                 help="Show all prices for given resource, e.g. '-r laranite'")
