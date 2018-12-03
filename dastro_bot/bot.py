@@ -93,7 +93,7 @@ class DiscordBot(BaseBot, Plugin):
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
     def show_fleet(self, event, args):
         if args.help:
-            event.channel.send_message(event.parser.format_help())
+            event.channel.send_message("```%s```" % event.parser.format_help())
         else:
             self.send_messages(event, self.get_fleet_tables(args))
 
