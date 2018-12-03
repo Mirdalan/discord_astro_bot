@@ -80,6 +80,9 @@ class DiscordBot(BaseBot, Plugin):
 
     @Plugin.command('fleet', parser=True, docstring="Organization fleet information. Try 'fleet -h' for more details.")
     @Plugin.command(additional_commands.fleet, parser=True)
+    @Plugin.parser.add_argument('-r', '--flight-ready', action='store_true', help="Show only flight-ready and loaners.")
+    @Plugin.parser.add_argument("-m", "--member", action='store',
+                                help="Show member fleet, eg. '-m onufry'")
     @Plugin.parser.add_argument("-o", "--order-by", action='store',
                                 help="Choses columns for sorting, eg. '-o name,manufacturer'")
     @Plugin.parser.add_argument('-d', '--descending', action='store_true', help="Changes sorting to descending")
@@ -93,11 +96,6 @@ class DiscordBot(BaseBot, Plugin):
             event.channel.send_message(event.parser.format_help())
         else:
             self.send_messages(event, self.get_fleet_tables(args))
-
-    @Plugin.command('member_fleet', '<member_name:str>', docstring="Lists ships owned by specified member.")
-    @Plugin.command(additional_commands.member_ships, '<member_name:str>')
-    def show_member_fleet(self, event, member_name):
-        self.send_messages(event, self.get_member_fleet(member_name))
 
     @Plugin.command('add_ship', '<ship:str...>', docstring="Add ship to fleet, e.g. 'add_ship Herald LTI'")
     @Plugin.command(additional_commands.add_ship, '<ship:str...>')

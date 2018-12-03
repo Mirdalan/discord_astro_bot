@@ -20,7 +20,6 @@ Messages = namedtuple('Messages', [
 Commands = namedtuple('Commands', [
     'help',
     'fleet',
-    'member_ships',
     'add_ship',
     'remove_ship',
     'clear_member_ships',
@@ -52,7 +51,6 @@ messages_pl = Messages(
 commands_pl = Commands(
     help="pomoc",
     fleet="flota",
-    member_ships="flota_członka",
     add_ship="dodaj",
     remove_ship="usuń",
     clear_member_ships="usuń moje statki",
@@ -84,7 +82,6 @@ messages_en = Messages(
 commands_en = Commands(
     help="help",
     fleet="fleet",
-    member_ships="member_ships",
     add_ship="add_ship",
     remove_ship="remove_ship",
     clear_member_ships="clear my ships",
