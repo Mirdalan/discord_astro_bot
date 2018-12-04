@@ -179,6 +179,24 @@ class DiscordBot(BaseBot, Plugin):
         else:
             self.send_messages(event, self.get_trade_messages(args))
 
+    @Plugin.command('trade_report', parser=True,
+                    docstring="Report new trade price. Try 'trade_report -h' for more details.")
+    @Plugin.command(additional_commands.trade_report, parser=True)
+    @Plugin.parser.add_argument("-n", "--commodity-name", action='store',
+                                help="Required. Commodity name, e.g. '-n Medical Supplies'")
+    @Plugin.parser.add_argument("-p", "--price", action='store',
+                                help="Required. Commodity unit price, e.g. '-p 14.54'")
+    @Plugin.parser.add_argument("-t", "--transaction-type", action='store',
+                                help="Required. Type of transaction for given price [buy/sell], e.g. '-t sell'")
+    @Plugin.parser.add_argument('-l', '--location-name', action='store',
+                                help="Required. Location of reported price, e.g. -l grim hex")
+    @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
+    def trade_report(self, event, args):
+        if args.help:
+            event.channel.send_message("```%s```" % event.parser.format_help())
+        else:
+            event.channel.send_message(self.report_trade_price(args))
+
     @Plugin.command('mining', parser=True, docstring="Mining assistant. Try 'mining -h' for more details.")
     @Plugin.command(additional_commands.mining, parser=True)
     @Plugin.parser.add_argument("-r", "--resource", action='store',
@@ -192,3 +210,23 @@ class DiscordBot(BaseBot, Plugin):
             event.channel.send_message("```%s```" % self.update_trade_data())
         else:
             event.channel.send_message(self.get_mining_messages(args.resource))
+
+    @Plugin.command('mining_report', parser=True,
+                    docstring="Report new trade price. Try 'trade_report -h' for more details.")
+    @Plugin.command(additional_commands.mining_report, parser=True)
+    @Plugin.parser.add_argument("-n", "--resource-name", action='store',
+                                help="Required. Resource name, e.g. '-n Medical Supplies'")
+    @Plugin.parser.add_argument("-p", "--percent", action='store',
+                                help="Required. Resource amount as cargo percentage., e.g. '-p 14.54'")
+    @Plugin.parser.add_argument("-v", "--value", action='store',
+                                help="Required. Resource value offered by refinery, e.g. '-v 47'")
+    @Plugin.parser.add_argument('-l', '--location-name', action='store',
+                                help="Required. Location of reported price, e.g. -l lorville")
+    @Plugin.parser.add_argument('-c', '--cargo', action='store',
+                                help="Optional. Size of mining ship cargo (Prospector by default), e.g. -c 32")
+    @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
+    def mining_report(self, event, args):
+        if args.help:
+            event.channel.send_message("```%s```" % event.parser.format_help())
+        else:
+            event.channel.send_message(self.report_mining_price(args))
