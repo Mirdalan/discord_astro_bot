@@ -95,7 +95,11 @@ class DiscordBot(BaseBot, Plugin):
         if args.help:
             event.channel.send_message("```%s```" % event.parser.format_help())
         else:
-            self.send_messages(event, self.get_fleet_tables(args))
+            fleet_tables = self.get_fleet_tables(args)
+            if fleet_tables:
+                self.send_messages(event, fleet_tables)
+            else:
+                event.channel.send_message(self.messages.something_went_wrong)
 
     @Plugin.command('add_ship', '<ship:str...>', docstring="Add ship to fleet, e.g. 'add_ship Herald LTI'")
     @Plugin.command(additional_commands.add_ship, '<ship:str...>')
@@ -146,6 +150,8 @@ class DiscordBot(BaseBot, Plugin):
                                 help="Find pages with specified expression., eg. '-f carrack'")
     @Plugin.parser.add_argument("-l", "--list", action='store_true',
                                 help="Lists available categories and versions.")
+    @Plugin.parser.add_argument("-s", "--squadron", action='store_true',
+                                help="Display Squadron 42 road map.")
     @Plugin.parser.add_argument("-u", "--update", action='store_true',
                                 help="Update database with data downloaded from RSI page.")
     @Plugin.parser.add_argument('-h', '--help', action='store_true', help="Show this help message.")
