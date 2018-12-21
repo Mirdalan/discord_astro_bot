@@ -36,6 +36,7 @@ SHIPS_MATRIX_KEYS = ["name", "focus", "url", "production_status", "length", "bea
 
 API_INIT_URL = BASE_URL + "/roadmap/board/1-Star-Citizen"
 ROAD_MAP_URL = BASE_URL + "/api/roadmap/v1/boards/1"
+SQ_ROAD_MAP_URL = BASE_URL + "/api/roadmap/v1/boards/2"
 FORUM_SEARCH_URL = BASE_URL + "/api/spectrum/search/content/extended"
 FORUM_SEARCH_PAYLOAD = {
     "community_id": "1",
