@@ -119,6 +119,15 @@ class DiscordBot(BaseBot, Plugin):
         if ships_left:
             event.channel.send_message(self.messages.something_went_wrong)
 
+    @Plugin.command('remove_member', '<ship:str...>',
+                    docstring="Remove member from fleet, e.g. 'remove_member Nobody'")
+    @Plugin.command(additional_commands.remove_member, '<member:str...>')
+    def remove_member(self, event, member_name):
+        if self.delete_member(member_name):
+            event.channel.send_message(self.messages.success)
+        else:
+            event.channel.send_message(self.messages.something_went_wrong)
+
     @Plugin.command('prices', '<query:str...>', docstring="Ships prices in store credits, e.g. 'prices Cutlass'")
     @Plugin.command(additional_commands.prices, '<query:str...>')
     def check_ship_price(self, event, query):
