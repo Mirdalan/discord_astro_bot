@@ -119,9 +119,9 @@ class DiscordBot(BaseBot, Plugin):
         if ships_left:
             event.channel.send_message(self.messages.something_went_wrong)
 
-    @Plugin.command('remove_member', '<ship:str...>',
+    @Plugin.command('remove_member', '<member_name:str...>',
                     docstring="Remove member from fleet, e.g. 'remove_member Nobody'")
-    @Plugin.command(additional_commands.remove_member, '<member:str...>')
+    @Plugin.command(additional_commands.remove_member, '<member_name:str...>')
     def remove_member(self, event, member_name):
         if self.delete_member(member_name):
             event.channel.send_message(self.messages.success)
