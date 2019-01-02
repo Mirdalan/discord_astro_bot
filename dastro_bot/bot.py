@@ -39,6 +39,26 @@ class DiscordBot(BaseBot, Plugin):
     def _get_bot_user(self):
         return self.bot.client.api.users_me_get()
 
+    def _get_member_roles(self):
+        return [
+            role.id for role in self.client.api.guilds_roles_list(self.guild_id)
+            if role.name in self.member_roles_names
+        ]
+
+    def user_is_member(self, user):
+        member = self.client.api.guilds_members_get(self.guild_id, user.id)
+        return any(role in self.member_roles for role in member.roles)
+
+    def _get_privileged_roles(self):
+        return [
+            role.id for role in self.client.api.guilds_roles_list(self.guild_id)
+            if role.name in self.privileged_roles_names
+        ]
+
+    def user_is_privileged(self, user):
+        member = self.client.api.guilds_members_get(self.guild_id, user.id)
+        return any(role in self.privileged_roles for role in member.roles)
+
     @staticmethod
     def mention_user(user):
         return '<@' + str(user.id) + '>'
@@ -94,7 +114,7 @@ class DiscordBot(BaseBot, Plugin):
     def show_fleet(self, event, args):
         if args.help:
             event.channel.send_message("```%s```" % event.parser.format_help())
-        else:
+        elif self.user_is_member(event.author):
             fleet_tables = self.get_fleet_tables(args)
             if fleet_tables:
                 self.send_messages(event, fleet_tables)
@@ -104,7 +124,8 @@ class DiscordBot(BaseBot, Plugin):
     @Plugin.command('add_ship', '<ship:str...>', docstring="Add ship to fleet, e.g. 'add_ship Herald LTI'")
     @Plugin.command(additional_commands.add_ship, '<ship:str...>')
     def add_ship(self, event, ship):
-        self.send_messages(event, self.add_member_ship(ship, event.author))
+        if self.user_is_member(event.author):
+            self.send_messages(event, self.add_member_ship(ship, event.author))
 
     @Plugin.command('remove_ship', '<ship:str...>',
                     docstring="Remove ship from member fleet, e.g. 'remove_ship Herald LTI'")
@@ -123,10 +144,11 @@ class DiscordBot(BaseBot, Plugin):
                     docstring="Remove member from fleet, e.g. 'remove_member Nobody'")
     @Plugin.command(additional_commands.remove_member, '<member_name:str...>')
     def remove_member(self, event, member_name):
-        if self.delete_member(member_name):
-            event.channel.send_message(self.messages.success)
-        else:
-            event.channel.send_message(self.messages.something_went_wrong)
+        if self.user_is_privileged(event.author):
+            if self.delete_member(member_name):
+                event.channel.send_message(self.messages.success)
+            else:
+                event.channel.send_message(self.messages.something_went_wrong)
 
     @Plugin.command('prices', '<query:str...>', docstring="Ships prices in store credits, e.g. 'prices Cutlass'")
     @Plugin.command(additional_commands.prices, '<query:str...>')

@@ -9,11 +9,20 @@ messages = languages.messages_en
 additional_commands = languages.commands_en
 
 # server
+GUILD_ID = 000000000000000000
 CHANNELS = {
     'main': '000000000000000000',
     'lobby': '000000000000000000',
     'recruitment': '000000000000000000',
 }
+MEMBER_ROLES = [
+    'member',
+    'older member'
+]
+PRIVILEGED_ROLES = [
+    'officer',
+    'admin'
+]
 MESSAGE_MAX_CHARACTERS = 2000
 MESSAGE_MAX_SHIPS = 24
 
