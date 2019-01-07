@@ -89,7 +89,7 @@ class DiscordBot(BaseBot, Plugin):
 
     @Plugin.listen('MessageCreate')
     def on_message_create(self, event):
-        if event.attachments:
+        if event.attachments and self.user_is_member(event.author):
             self.logger.debug("The msg has an attachment. Checking if contains ship list..")
             self.update_fleet(event.attachments, event.author)
 
@@ -234,6 +234,12 @@ class DiscordBot(BaseBot, Plugin):
             event.channel.send_message("```%s```" % event.parser.format_help())
         else:
             event.channel.send_message(self.report_trade_price(args))
+
+    @Plugin.command('trade_prices', '<location:str...>',
+                    docstring="Show commodities prices, e.g. 'trade_prices lorville'")
+    @Plugin.command(additional_commands.trade_prices, '<location:str...>')
+    def trade_prices(self, event, location):
+        self.send_messages(event, self.get_trade_prices_msgs(location))
 
     @Plugin.command('mining', parser=True, docstring="Mining assistant. Try 'mining -h' for more details.")
     @Plugin.command(additional_commands.mining, parser=True)
