@@ -14,7 +14,8 @@ Messages = namedtuple('Messages', [
     'new_version',
     'road_map_not_found',
     'something_went_wrong',
-    'success'
+    'success',
+    'found_nothing',
 ])
 
 Commands = namedtuple('Commands', [
@@ -50,6 +51,7 @@ messages_pl = Messages(
     road_map_not_found="Przykro mi, nic takiego nie znalazłem. Posiadam jednakże wiedzę o poniższych:\n```%s```",
     something_went_wrong="Coś poszło nie tak...",
     success="Udało się!",
+    found_nothing="Przykro mi, lecz nic nie znalazłem."
 )
 
 commands_pl = Commands(
@@ -85,6 +87,7 @@ messages_en = Messages(
     road_map_not_found="Sorry, didn't find anything like that. You may try something like:\n```%s```",
     something_went_wrong="Something went wrong...",
     success="Done!",
+    found_nothing="I'm sorry. I found nothing."
 )
 
 commands_en = Commands(
